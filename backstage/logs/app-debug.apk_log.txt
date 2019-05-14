@@ -1,0 +1,22 @@
+Running UI analysis with timeout for entrypoint class: 1 MINUTES
+found imageMarker without drawable: src=@null
+found imageMarker without drawable: src=?actionModeCloseDrawable
+Found 9 entrypoint classes and 17 methods in overall
+Found 1 reachable methods from <com.example.avdiienko.button_xml.OneListenerMultipleButtons: boolean onCreateOptionsMenu(android.view.Menu)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.ActivityClassImplementsListenerInterface: boolean onCreateOptionsMenu(android.view.Menu)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.MainActivity: boolean onCreateOptionsMenu(android.view.Menu)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.MemberClass: boolean onCreateOptionsMenu(android.view.Menu)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.IdInArray: boolean onCreateOptionsMenu(android.view.Menu)>
+Found 2 reachable methods from <com.example.avdiienko.button_xml.BaseActivity: void onCreate(android.os.Bundle)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.ActivityClassImplementsListenerInterface: void onCreate(android.os.Bundle)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.InterfaceType: void onCreate(android.os.Bundle)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.InterfaceType: boolean onCreateOptionsMenu(android.view.Menu)>
+Found 3 reachable methods from <com.example.avdiienko.button_xml.OneListenerMultipleButtons: void onCreate(android.os.Bundle)>
+Found 6 reachable methods from <com.example.avdiienko.button_xml.ButtonWithListenerInMethod: void onCreate(android.os.Bundle)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.ButtonWithListenerInMethod: boolean onCreateOptionsMenu(android.view.Menu)>
+Found 5 reachable methods from <com.example.avdiienko.button_xml.IdInArray: void onCreate(android.os.Bundle)>
+Found 8 reachable methods from <com.example.avdiienko.button_xml.AnonymousOnClickHandler: void onCreate(android.os.Bundle)>
+Found 1 reachable methods from <com.example.avdiienko.button_xml.AnonymousOnClickHandler: boolean onCreateOptionsMenu(android.view.Menu)>
+Found 8 reachable methods from <com.example.avdiienko.button_xml.MemberClass: void onCreate(android.os.Bundle)>
+Found 8 reachable methods from <com.example.avdiienko.button_xml.MainActivity: void onCreate(android.os.Bundle)>
+Dynamical declared elements, found: 0
