@@ -6,7 +6,7 @@ public class TestConfig {
      * @return the commend line arguments
      */
     static String[] getConfigForTest() {
-        String apkPath = TestConstants.APK_TODOAPP;
+        String apkPath = TestConstants.ZEDGE_DIR;
         String[] args = new String[4];
         args[0] = "ate";
         args[1] = "-d";

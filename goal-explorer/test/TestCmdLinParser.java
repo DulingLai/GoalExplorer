@@ -21,7 +21,7 @@ public class TestCmdLinParser {
             Logger.info("Working on: {}", file.getName());
             String[] args = TestConfig. getConfigForTest(file.getAbsolutePath());
             try {
-                CmdLineParser.main(args);
+                CmdLineParser.parse(args);
             } catch (Exception e) {
                 Logger.error("Failed: {}", e.getMessage());
             }

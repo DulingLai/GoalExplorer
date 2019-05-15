@@ -92,16 +92,16 @@ public class AbstractComponent {
     }
 
     /**
-     * Gets the main SootClass of this component
-     * @return The main SootClass
+     * Gets the parse SootClass of this component
+     * @return The parse SootClass
      */
     public SootClass getMainClass() {
         return mainClass;
     }
 
     /**
-     * Sets the main SootClass of this component
-     * @param mainClass The main soot class
+     * Sets the parse SootClass of this component
+     * @param mainClass The parse soot class
      */
     public void setMainClass(SootClass mainClass) {
         this.mainClass = mainClass;

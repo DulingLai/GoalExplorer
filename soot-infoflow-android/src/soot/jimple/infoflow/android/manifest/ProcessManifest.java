@@ -414,10 +414,15 @@ public class ProcessManifest implements Closeable {
 	protected AXmlNode getNodeWithName(List<AXmlNode> list, String name) {
 		for (AXmlNode node : list) {
 			Object attr = node.getAttributes().get("name");
-			if (attr != null && ((AXmlAttribute<?>) attr).getValue().equals(name))
-				return node;
+			if (attr != null) {
+				if (((AXmlAttribute<?>) attr).getValue().equals(name))
+					return node;
+				if (((AXmlAttribute<?>) attr).getValue().equals(name.substring(name.lastIndexOf('.'))))
+					return node;
+				if (((AXmlAttribute<?>) attr).getValue().equals(name.substring(name.lastIndexOf('.')+1)))
+					return node;
+			}
 		}
-
 		return null;
 	}
 
@@ -591,7 +596,7 @@ public class ProcessManifest implements Closeable {
 	/**
 	 * Adds a new permission to the manifest.
 	 *
-	 * @param complete permission name e.g. "android.permission.INTERNET"
+	 * @param permissionName permission name e.g. "android.permission.INTERNET"
 	 */
 	public void addPermission(String permissionName) {
 		AXmlNode permission = new AXmlNode("uses-permission", null, manifest);

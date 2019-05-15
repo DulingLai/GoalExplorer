@@ -159,16 +159,16 @@ public class Activity extends AbstractComponent {
     }
 
     /**
-     * Gets the resource id of the main XML layout file of this activity
-     * @return The resource id of the main XML layout file of this activity
+     * Gets the resource id of the parse XML layout file of this activity
+     * @return The resource id of the parse XML layout file of this activity
      */
     public Integer getMainXmlLayoutResId() {
         return mainXmlLayoutResId;
     }
 
     /**
-     * Sets the resource id of the main XML layout file of this activity
-     * @param mainXmlLayoutResId The resource id of the main XML layout file of this activity
+     * Sets the resource id of the parse XML layout file of this activity
+     * @param mainXmlLayoutResId The resource id of the parse XML layout file of this activity
      */
     public void setMainXmlLayoutResId(Integer mainXmlLayoutResId) {
         this.mainXmlLayoutResId = mainXmlLayoutResId;

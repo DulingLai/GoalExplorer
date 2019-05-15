@@ -57,22 +57,18 @@ public class CmdLineParser {
         Option version = new Option( OPTION_VERSION,"version", false,"print version info" );
 
         // add the options
-        options.addOption(input);
-        options.addOption(output);
-        options.addOption(config);
-        options.addOption(sdkPath);
-        options.addOption(apiLevel);
-        options.addOption(iccModel);
-        options.addOption(timeOut);
-        options.addOption(maxCallback);
-        options.addOption(debug);
-        options.addOption(help);
-        options.addOption(version);
+        options.addOption(input).addOption(output).addOption(config).addOption(sdkPath).addOption(apiLevel).addOption(iccModel);
+        options.addOption(timeOut).addOption(maxCallback).addOption(debug).addOption(help).addOption(version);
     }
 
-    public static void main(String[] args) throws Exception {
+    /**
+     * parse the command line arguments
+     * @param args The command line arguments
+     * @return the configuration
+     */
+    public static GlobalConfig parse(String[] args) {
         CmdLineParser mainClass = new CmdLineParser();
-        mainClass.run(args);
+        return mainClass.run(args);
     }
 
     /**
@@ -80,7 +76,7 @@ public class CmdLineParser {
      * @param cmd The command line arguments
      * @param config The configuration object ({@link GlobalConfig})
      */
-    private void parseCommandLineArgs(CommandLine cmd, GlobalConfig config) {
+    private void parseCommandLineArgs(CommandLine cmd, GlobalConfig config) throws Exception {
         // Set apk path and output path
         if (cmd.hasOption(OPTION_INPUT_APK_PATH) || cmd.hasOption("input")) {
             String apkFile = cmd.getOptionValue(OPTION_INPUT_APK_PATH);
@@ -190,50 +186,47 @@ public class CmdLineParser {
     /**
      * Parse the command line arguments.
      *
-     * @param args the command line arguments passed from main().
+     * @param args the command line arguments passed from parse().
+     * @return the configuration parsed from command line arguments
      */
-    private void run(String[] args) throws Exception {
+    private GlobalConfig run(String[] args) {
         // Initial check for the number of arguments
         final HelpFormatter formatter = new HelpFormatter();
         if (args.length == 0) {
             formatter.printHelp("ge [OPTIONS]", options, true);
-            return;
+            System.exit(1);
         }
 
         // Use commons lib to parse the params
         CommandLineParser parser = new DefaultParser();
+        GlobalConfig config = new GlobalConfig();
         try {
             CommandLine cmd = parser.parse(options, args);
 
             // display the help message if option is specified
             if (cmd.hasOption(OPTION_HELP) || cmd.hasOption("help")) {
                 formatter.printHelp("ge [OPTIONS]", options, true);
-                return;
+                System.exit(1);
             }
 
             // display version info and exit
             if (cmd.hasOption(OPTION_VERSION) || cmd.hasOption("version")) {
                 System.out.println("ge " + getClass().getPackage().getImplementationVersion());
-                return;
+                System.exit(1);
             }
-
-            final GlobalConfig config = new GlobalConfig();
 
             // the actual param parsing
             parseCommandLineArgs(cmd, config);
 
-            // analyze the app and construct STG
-            STGExtractor extractor = new STGExtractor(config);
-
-            // run the analysis
-            extractor.constructSTG();
-
         } catch (ParseException e) {
             formatter.printHelp("ge [OPTIONS]", options, true);
+            System.exit(1);
         } catch (Exception e) {
             Logger.error("GoalExplorer has failed. Error message: {}", e.getMessage());
             e.printStackTrace();
+            System.exit(1);
         }
+        return config;
     }
 
     /**

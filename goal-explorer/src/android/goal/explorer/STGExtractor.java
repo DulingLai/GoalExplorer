@@ -41,15 +41,19 @@ public class STGExtractor {
      */
     public void constructSTG() {
 
+
+        initialize();
+
+        // step 1.
+        Logger.debug("here");
+    }
+
+    public void initialize() {
         // Construct the callgraph
         app.constructCallgraph();
 
         // initialize the model
         App.v().initializeAppModel(app);
-
-        // step 1.
-        Logger.debug("here");
-
     }
 
 

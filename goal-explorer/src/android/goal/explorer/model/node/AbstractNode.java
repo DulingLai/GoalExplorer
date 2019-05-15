@@ -42,16 +42,16 @@ public class AbstractNode {
     }
 
     /**
-     * Gets the main component of this node
-     * @return The main component
+     * Gets the parse component of this node
+     * @return The parse component
      */
     public AbstractComponent getComponent() {
         return this.component;
     }
 
     /**
-     * Sets the main component of this node
-     * @param component The main component
+     * Sets the parse component of this node
+     * @param component The parse component
      */
     public void setComponent(AbstractComponent component) {
         this.component = component;
