@@ -1,16 +1,6 @@
-package android.goal.explorer.model.node;
+package android.goal.explorer.model.stg.node;
 
 import android.goal.explorer.model.component.AbstractComponent;
-import android.goal.explorer.model.entity.IntentFilter;
-import soot.MethodOrMethodContext;
-import soot.SootClass;
-import soot.jimple.infoflow.android.axml.AXmlNode;
-import soot.jimple.infoflow.android.callbacks.CallbackDefinition;
-import soot.jimple.infoflow.android.callbacks.ComponentReachableMethods;
-
-import java.util.*;
-
-import static android.goal.explorer.utils.AxmlUtils.processNodeName;
 
 public class AbstractNode {
 

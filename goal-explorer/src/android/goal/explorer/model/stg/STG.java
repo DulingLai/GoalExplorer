@@ -1,21 +1,22 @@
-package android.goal.explorer.model;
+package android.goal.explorer.model.stg;
 
+import android.goal.explorer.model.App;
 import android.goal.explorer.model.component.*;
-import android.goal.explorer.model.edge.EdgeTag;
-import android.goal.explorer.model.edge.TransitionEdge;
+import android.goal.explorer.model.stg.edge.EdgeTag;
+import android.goal.explorer.model.stg.edge.TransitionEdge;
 import android.goal.explorer.model.entity.Drawer;
 import android.goal.explorer.model.entity.Menu;
-import android.goal.explorer.model.node.AbstractNode;
-import android.goal.explorer.model.node.BroadcastReceiverNode;
-import android.goal.explorer.model.node.ScreenNode;
-import android.goal.explorer.model.node.ServiceNode;
+import android.goal.explorer.model.stg.node.AbstractNode;
+import android.goal.explorer.model.stg.node.BroadcastReceiverNode;
+import android.goal.explorer.model.stg.node.ScreenNode;
+import android.goal.explorer.model.stg.node.ServiceNode;
 import soot.util.HashMultiMap;
 import soot.util.MultiMap;
 
 import java.util.*;
 
 public class STG {
-    private static STG instance;
+//    private static STG instance;
     private List<TransitionEdge> transitionEdges;
     private Set<ScreenNode> screenNodeSet;
     private Set<ServiceNode> serviceNodeSet;
@@ -24,34 +25,52 @@ public class STG {
     private MultiMap<AbstractNode, TransitionEdge> outEdgeMap;
     private MultiMap<AbstractNode, TransitionEdge> inEdgeMap;
 
-    public static synchronized STG v() {
-        if (instance == null)
-            throw new RuntimeException("SSTG was not initialized. Please make sure to call "
-                    + "initialize() before accessing the singleton");
-        return instance;
-    }
+//    public static synchronized STG v() {
+//        if (instance == null)
+//            throw new RuntimeException("SSTG was not initialized. Please make sure to call "
+//                    + "initialize() before accessing the singleton");
+//        return instance;
+//    }
 
-    public static void initialize(Set<Activity> activitySet, Set<Service> serviceSet,
-                                  Set<BroadcastReceiver> broadcastReceiverSet) {
-        instance = new STG();
+//    public static void initialize(Set<Service> serviceSet,
+//                                  Set<BroadcastReceiver> broadcastReceiverSet) {
+//        instance = new STG();
+//
+//        // initialize empty sets
+//        instance.screenNodeSet = Collections.synchronizedSet(new HashSet<>());
+//        instance.serviceNodeSet = Collections.synchronizedSet(new HashSet<>());
+//        instance.broadcastReceiverNodeSet = Collections.synchronizedSet(new HashSet<>());
+//        instance.transitionEdges = Collections.synchronizedList(new ArrayList<>());
+//        instance.outEdgeMap = new HashMultiMap<>();
+//        instance.inEdgeMap = new HashMultiMap<>();
+//
+//        // create initial nodes
+//        for (Service service : serviceSet) {
+//            instance.serviceNodeSet.add(new ServiceNode(service));
+//        }
+//        for (BroadcastReceiver receiver : broadcastReceiverSet) {
+//            instance.broadcastReceiverNodeSet.add(new BroadcastReceiverNode(receiver));
+//        }
+//    }
 
+    /**
+     * Constructor for STG that initialize STG with service and broadcast receiver nodes
+     */
+    public STG() {
         // initialize empty sets
-        instance.screenNodeSet = Collections.synchronizedSet(new HashSet<>());
-        instance.serviceNodeSet = Collections.synchronizedSet(new HashSet<>());
-        instance.broadcastReceiverNodeSet = Collections.synchronizedSet(new HashSet<>());
-        instance.transitionEdges = Collections.synchronizedList(new ArrayList<>());
-        instance.outEdgeMap = new HashMultiMap<>();
-        instance.inEdgeMap = new HashMultiMap<>();
+        this.screenNodeSet = Collections.synchronizedSet(new HashSet<>());
+        this.serviceNodeSet = Collections.synchronizedSet(new HashSet<>());
+        this.broadcastReceiverNodeSet = Collections.synchronizedSet(new HashSet<>());
+        this.transitionEdges = Collections.synchronizedList(new ArrayList<>());
+        this.outEdgeMap = new HashMultiMap<>();
+        this.inEdgeMap = new HashMultiMap<>();
 
         // create initial nodes
-        for (Activity activity : activitySet) {
-            instance.screenNodeSet.add(new ScreenNode(activity));
+        for (Service service : App.v().getServices()) {
+            this.serviceNodeSet.add(new ServiceNode(service));
         }
-        for (Service service : serviceSet) {
-            instance.serviceNodeSet.add(new ServiceNode(service));
-        }
-        for (BroadcastReceiver receiver : broadcastReceiverSet) {
-            instance.broadcastReceiverNodeSet.add(new BroadcastReceiverNode(receiver));
+        for (BroadcastReceiver receiver : App.v().getBroadcastReceivers()) {
+            this.broadcastReceiverNodeSet.add(new BroadcastReceiverNode(receiver));
         }
     }
 

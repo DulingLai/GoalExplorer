@@ -99,6 +99,9 @@ public class App {
     private void initializeComponents(Set<SootClass> entrypointClasses, ProcessManifest manifest) {
         AndroidEntryPointUtils entryPointUtils = new AndroidEntryPointUtils();
         for (SootClass comp : entrypointClasses) {
+            if (comp.getName().contains("MessageCompose"))
+                Logger.debug("here");
+
             AndroidEntryPointUtils.ComponentType compType = entryPointUtils.getComponentType(comp);
             switch (compType) {
                 case Activity:
@@ -132,6 +135,9 @@ public class App {
                     break;
                 case Fragment:
                     this.fragments.add(new Fragment(comp));
+                    AXmlNode newNode = manifest.getActivity(comp.getName());
+                    if (newNode != null)
+                        this.activities.add(new Activity(newNode, comp, packageName));
                     break;
                 case Application:
                     AXmlNode applicationNode = manifest.getApplication();
@@ -141,10 +147,32 @@ public class App {
                         Logger.error("Failed to find content provider in the manifest: {}", comp.getName());
                     break;
                 case ServiceConnection:
-                case GCMBaseIntentService:
-                case GCMListenerService:
-                case Plain:
                     Logger.debug("This should not happen. Let's see what are those classes.");
+                    break;
+                case GCMBaseIntentService:
+                    Logger.debug("This should not happen. Let's see what are those classes.");
+                    break;
+                case GCMListenerService:
+                    Logger.debug("This should not happen. Let's see what are those classes.");
+                    break;
+                case Plain:
+                    AXmlNode plainNode = manifest.getActivity(comp.getName());
+                    if (plainNode != null) {
+                        this.activities.add(new Activity(plainNode, comp, packageName));
+                        break;
+                    } else {
+                        plainNode = manifest.getService(comp.getName());
+                        if (plainNode != null) {
+                            this.services.add(new Service(plainNode, comp, packageName));
+                            break;
+                        } else {
+                            plainNode = manifest.getReceiver(comp.getName());
+                            if (plainNode != null) {
+                                this.broadcastReceivers.add(new BroadcastReceiver(plainNode, comp, packageName));
+                                break;
+                            }
+                        }
+                    }
             }
         }
     }
@@ -175,9 +203,10 @@ public class App {
      */
     public synchronized Activity getActivityByName(String activityName) {
         for(Activity activity : activities){
-            if (activity.getName().equals(activityName)) {
+            if (activity.getName().equals(activityName))
                 return activity;
-            }
+            if (activity.getShortName().equals(activityName))
+                return activity;
         }
         return null;
     }
@@ -239,6 +268,21 @@ public class App {
     }
 
     /**
+     * Gets the specific service by name
+     * @param serviceName The service name
+     * @return The service with specific name
+     */
+    public synchronized Service getServiceByName(String serviceName) {
+        for(Service service : services){
+            if (service.getName().equals(serviceName))
+                return service;
+            if (service.getShortName().equals(serviceName))
+                return service;
+        }
+        return null;
+    }
+
+    /**
      * Adds a set of services to the model
      * @param services The services to be added
      */
@@ -270,6 +314,21 @@ public class App {
     public synchronized void addBroadcastReceivers(Set<BroadcastReceiver> broadcastReceivers) {
         broadcastReceivers.remove(null);
         this.broadcastReceivers.addAll(broadcastReceivers);
+    }
+
+    /**
+     * Gets the specific broadcast receiver by name
+     * @param receiverName The broadcast receiver name
+     * @return The broadcast receiver with specific name
+     */
+    public synchronized BroadcastReceiver getReceiverByName(String receiverName) {
+        for(BroadcastReceiver receiver : broadcastReceivers){
+            if (receiver.getName().equals(receiverName))
+                return receiver;
+            if (receiver.getShortName().equals(receiverName))
+                return receiver;
+        }
+        return null;
     }
 
     /**

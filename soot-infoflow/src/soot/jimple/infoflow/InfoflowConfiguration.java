@@ -962,8 +962,8 @@ public class InfoflowConfiguration {
 	private SolverConfiguration solverConfiguration = new SolverConfiguration();
 	private AccessPathConfiguration accessPathConfiguration = new AccessPathConfiguration();
 
-//	private CallgraphAlgorithm callgraphAlgorithm = CallgraphAlgorithm.AutomaticSelection;
-	private CallgraphAlgorithm callgraphAlgorithm = CallgraphAlgorithm.GEOM;
+	private CallgraphAlgorithm callgraphAlgorithm = CallgraphAlgorithm.AutomaticSelection;
+//	private CallgraphAlgorithm callgraphAlgorithm = CallgraphAlgorithm.GEOM;
 	private AliasingAlgorithm aliasingAlgorithm = AliasingAlgorithm.FlowSensitive;
 	private CodeEliminationMode codeEliminationMode = CodeEliminationMode.PropagateConstants;
 	private StaticFieldTrackingMode staticFieldTrackingMode = StaticFieldTrackingMode.ContextFlowSensitive;

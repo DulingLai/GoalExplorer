@@ -421,6 +421,9 @@ public class ProcessManifest implements Closeable {
 					return node;
 				if (((AXmlAttribute<?>) attr).getValue().equals(name.substring(name.lastIndexOf('.')+1)))
 					return node;
+
+				if (((AXmlAttribute<?>) attr).getValue().equals(name.substring(cache_PackageName.length())))
+					return node;
 			}
 		}
 		return null;

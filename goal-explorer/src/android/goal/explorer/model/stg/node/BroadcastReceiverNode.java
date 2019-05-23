@@ -1,28 +1,27 @@
-package android.goal.explorer.model.node;
+package android.goal.explorer.model.stg.node;
 
 import android.goal.explorer.model.component.AbstractComponent;
-import android.goal.explorer.model.component.Service;
+import android.goal.explorer.model.component.BroadcastReceiver;
 
-public class ServiceNode extends AbstractNode {
+public class BroadcastReceiverNode extends AbstractNode {
 
-    public ServiceNode(Service service) {
-        super(service);
+    public BroadcastReceiverNode(BroadcastReceiver receiver) {
+        super(receiver);
     }
 
     /* ==================================================
                     Getters and setters
        ==================================================*/
     /**
-     * Gets the service component
-     * @return The service component
+     * Gets the broadcast receiver component
+     * @return The broadcast receiver component
      */
-    public AbstractComponent getService() {
+    public AbstractComponent getReceiver() {
         return getComponent();
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
         return super.hashCode();
     }
 
@@ -37,7 +36,7 @@ public class ServiceNode extends AbstractNode {
         if (getClass() != obj.getClass())
             return false;
 
-        ServiceNode other = (ServiceNode) obj;
+        BroadcastReceiverNode other = (BroadcastReceiverNode) obj;
         if (getComponent() == null) {
             return other.getComponent() == null;
         } else return getComponent().equals(other.getComponent());

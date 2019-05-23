@@ -1,4 +1,4 @@
-package android.goal.explorer.model.node;
+package android.goal.explorer.model.stg.node;
 
 import android.goal.explorer.model.component.Activity;
 import android.goal.explorer.model.component.Fragment;

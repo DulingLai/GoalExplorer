@@ -1,4 +1,4 @@
-package android.goal.explorer.model.edge;
+package android.goal.explorer.model.stg.edge;
 
 import android.goal.explorer.model.component.AbstractComponent;
 

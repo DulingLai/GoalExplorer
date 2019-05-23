@@ -1,5 +1,6 @@
 package android.goal.explorer.model.component;
 
+import android.goal.explorer.model.App;
 import android.goal.explorer.model.entity.IntentFilter;
 import soot.MethodOrMethodContext;
 import soot.SootClass;
@@ -13,6 +14,7 @@ import static android.goal.explorer.utils.AxmlUtils.processNodeName;
 
 public class AbstractComponent {
     private String name;
+    private String shortName;
     private SootClass mainClass;
     private Set<SootClass> addedClasses;
     private Set<CallbackDefinition> callbacks;
@@ -26,14 +28,16 @@ public class AbstractComponent {
 
     public AbstractComponent(AXmlNode node, String packageName) {
         this.name = processNodeName(node, packageName);
-        addedClasses = new HashSet<>();
-        callbacks = new HashSet<>();
-        lifecycleMethods = new LinkedList<>();
-        lifecycleReachableMethods = new LinkedHashMap<>();
+        setShortName(this.name.substring(packageName.length()));
+        this.addedClasses = new HashSet<>();
+        this.callbacks = new HashSet<>();
+        this.lifecycleMethods = new LinkedList<>();
+        this.lifecycleReachableMethods = new LinkedHashMap<>();
     }
 
     public AbstractComponent(AXmlNode node, SootClass sc, String packageName) {
         this.name = processNodeName(node, packageName);
+        setShortName(this.name.substring(packageName.length()));
         this.mainClass = sc;
         addedClasses = new HashSet<>();
         callbacks = new HashSet<>();
@@ -43,6 +47,7 @@ public class AbstractComponent {
 
     public AbstractComponent(String name, SootClass sc) {
         this.name = name;
+        setShortName(this.name.substring(App.v().getPackageName().length()));
         this.mainClass = sc;
         addedClasses = new HashSet<>();
         callbacks = new HashSet<>();
@@ -89,6 +94,22 @@ public class AbstractComponent {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Gets the short name of the component
+     * @return The short name of the component
+     */
+    public String getShortName() {
+        return shortName;
+    }
+
+    /**
+     * Sets the short name of the component
+     * @param shortName The short name of the component
+     */
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
     }
 
     /**
