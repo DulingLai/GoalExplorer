@@ -48,6 +48,8 @@ public class DefaultCallbackAnalyzer extends AbstractCallbackAnalyzer implements
 	private Set<IMemoryBoundedSolverStatusNotification> notificationListeners = new HashSet<>();
 	private ISolverTerminationReason isKilled = null;
 
+	private MultiMap<SootClass, ComponentReachableMethods> reachableMethodsMap = new HashMultiMap<>();
+
 	public DefaultCallbackAnalyzer(InfoflowAndroidConfiguration config, Set<SootClass> entryPointClasses)
 			throws IOException {
 		super(config, entryPointClasses);
@@ -129,8 +131,7 @@ public class DefaultCallbackAnalyzer extends AbstractCallbackAnalyzer implements
 						}
 
 						List<MethodOrMethodContext> entryClasses = new ArrayList<>(callbacks.size());
-						for (SootMethod sm : callbacks)
-							entryClasses.add(sm);
+						entryClasses.addAll(callbacks);
 
 						analyzeRechableMethods(componentClass, entryClasses);
 						classIt.remove();

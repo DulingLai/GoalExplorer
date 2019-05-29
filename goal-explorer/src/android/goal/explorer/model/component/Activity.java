@@ -352,10 +352,6 @@ public class Activity extends AbstractComponent {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((intentFilters == null) ? 0 : intentFilters.hashCode());
-        result = prime * result + ((listeners == null) ? 0 : listeners.hashCode());
-        result = prime * result + ((fragments == null) ? 0 : fragments.hashCode());
-        result = prime * result + ((widgets == null) ? 0 : widgets.hashCode());
         result = prime * result + ((resourceId == null) ? 0 : resourceId.hashCode());
         return result;
     }
@@ -364,32 +360,12 @@ public class Activity extends AbstractComponent {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (obj == null || this.getClass() != obj.getClass())
             return false;
         if (!super.equals(obj))
             return false;
-        if (getClass() != obj.getClass())
-            return false;
 
         Activity other = (Activity) obj;
-
-        if (intentFilters == null) {
-            if (other.intentFilters != null)
-                return false;
-        } else if (!intentFilters.equals(other.intentFilters))
-            return false;
-
-        if (fragments == null) {
-            if (other.fragments != null)
-                return false;
-        } else if (!fragments.equals(other.fragments))
-            return false;
-
-        if (widgets == null) {
-            if (other.widgets != null)
-                return false;
-        } else if (!widgets.equals(other.widgets))
-            return false;
 
         if (!resourceId.equals(other.resourceId))
             return false;

@@ -9,9 +9,12 @@ import org.pmw.tinylog.Logger;
 import soot.SootClass;
 import soot.jimple.infoflow.android.SetupApplication;
 import soot.jimple.infoflow.android.axml.AXmlNode;
+import soot.jimple.infoflow.android.callbacks.CallbackDefinition;
 import soot.jimple.infoflow.android.entryPointCreators.AndroidEntryPointUtils;
 import soot.jimple.infoflow.android.manifest.ProcessManifest;
+import soot.util.MultiMap;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -19,7 +22,7 @@ import java.util.Set;
 public class App {
 
     // Instance of the class
-    private static volatile App instance;
+//    private static volatile App instance;
 
     // Package name of the APK file
     private String packageName;
@@ -36,6 +39,12 @@ public class App {
     private Set<BroadcastReceiver> broadcastReceivers;
     private Set<ContentProvider> contentProviders;
 
+    // Fragment map
+    private MultiMap<SootClass, SootClass> fragmentClasses;
+
+    // Callbacks
+    private MultiMap<SootClass, CallbackDefinition> callbackMethods;
+
     // Other UI elements
     private Set<Fragment> fragments;
     private Set<Menu> menus;
@@ -44,19 +53,19 @@ public class App {
     // layout parser
     private LayoutManager layoutManager;
 
-    private App(){
+    public App(){
         reset();
     }
 
-    public static App v() {
-        if (instance == null) {
-            synchronized (App.class) {
-                if (instance == null)
-                    instance = new App();
-            }
-        }
-        return instance;
-    }
+//    public static App v() {
+//        if (instance == null) {
+//            synchronized (App.class) {
+//                if (instance == null)
+//                    instance = new App();
+//            }
+//        }
+//        return instance;
+//    }
 
     /**
      * Resets all components of the app
@@ -77,9 +86,11 @@ public class App {
      * @param app The SetupApplication instance from FlowDroid
      */
     public void initializeAppModel(SetupApplication app) {
-        reset();
-
         this.packageName = app.getPackageName();
+
+        // Callbacks and fragment classes collected by FlowDroid
+        this.callbackMethods = app.getCallbackMethods();
+        this.fragmentClasses = app.getFragmentClasses();
 
         // initialize the resources
         ResourceValueProvider.v().initializeResources(app.getResources());
@@ -89,6 +100,9 @@ public class App {
 
         // set the launch activity according to the manifest
         setLaunchActivities(app.getManifest().getLaunchableActivities());
+
+        // set layout manager
+        setLayoutManager(new LayoutManager(app.getLayoutFileParser()));
     }
 
     /**
@@ -97,11 +111,9 @@ public class App {
      * @param manifest The manifest of the app
      */
     private void initializeComponents(Set<SootClass> entrypointClasses, ProcessManifest manifest) {
+        // Process all entrypoints
         AndroidEntryPointUtils entryPointUtils = new AndroidEntryPointUtils();
         for (SootClass comp : entrypointClasses) {
-            if (comp.getName().contains("MessageCompose"))
-                Logger.debug("here");
-
             AndroidEntryPointUtils.ComponentType compType = entryPointUtils.getComponentType(comp);
             switch (compType) {
                 case Activity:
@@ -174,6 +186,11 @@ public class App {
                         }
                     }
             }
+        }
+
+        // Process fragments
+        for(SootClass fragmentClass : fragmentClasses.values()) {
+            this.fragments.add(new Fragment(fragmentClass));
         }
     }
 
@@ -442,6 +459,23 @@ public class App {
         Fragment fragment = getFragmentByResId(resId);
         if (fragment==null)
             addFragment(new Fragment(sc, resId));
+    }
+
+    /**
+     * Gets all callbacks in form of a MultiMap
+     * @return All callbacks mapped to SootClass where the callbacks are registered
+     */
+    public MultiMap<SootClass, CallbackDefinition> getCallbackMethods() {
+        return callbackMethods;
+    }
+
+    /**
+     * Gets the callbacks in a given SootClass
+     * @param sc The SootClass to look for callbacks
+     * @return The callbacks in the given SootClass
+     */
+    public Set<CallbackDefinition> getCallbacksInSootClass(SootClass sc) {
+        return callbackMethods.get(sc);
     }
 
     /**

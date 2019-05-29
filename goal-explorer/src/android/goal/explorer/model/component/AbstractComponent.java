@@ -47,7 +47,7 @@ public class AbstractComponent {
 
     public AbstractComponent(String name, SootClass sc) {
         this.name = name;
-        setShortName(this.name.substring(App.v().getPackageName().length()));
+        setShortName(this.name.substring(name.lastIndexOf('.')+1));
         this.mainClass = sc;
         addedClasses = new HashSet<>();
         callbacks = new HashSet<>();
@@ -248,9 +248,7 @@ public class AbstractComponent {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
+        if (obj == null || this.getClass() != obj.getClass())
             return false;
 
         AbstractComponent other = (AbstractComponent) obj;

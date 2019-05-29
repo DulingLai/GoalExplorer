@@ -1,6 +1,6 @@
 package android.goal.explorer.utils;
 
-import android.goal.explorer.cmd.GlobalConfig;
+import android.goal.explorer.cmdline.GlobalConfig;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.pmw.tinylog.Logger;

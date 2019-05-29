@@ -36,15 +36,15 @@ import soot.util.queue.QueueReader;
  */
 public class ComponentReachableMethods {
 
-	private final InfoflowAndroidConfiguration config;
+	protected final InfoflowAndroidConfiguration config;
 	private final SootClass originalComponent;
-	private final Set<MethodOrMethodContext> set = new HashSet<MethodOrMethodContext>();
-	private final ChunkedQueue<MethodOrMethodContext> reachables = new ChunkedQueue<MethodOrMethodContext>();
+	protected final Set<MethodOrMethodContext> set = new HashSet<MethodOrMethodContext>();
+	protected final ChunkedQueue<MethodOrMethodContext> reachables = new ChunkedQueue<MethodOrMethodContext>();
 	private final QueueReader<MethodOrMethodContext> allReachables = reachables.reader();
-	private QueueReader<MethodOrMethodContext> unprocessedMethods;
+	protected QueueReader<MethodOrMethodContext> unprocessedMethods;
 
 	/**
-	 * Creates a new instance of the {@link MyReachableMethods} class
+	 * Creates a new instance of the {@link ComponentReachableMethods} class
 	 * 
 	 * @param config
 	 *            The configuration of the data flow solver
@@ -80,58 +80,65 @@ public class ComponentReachableMethods {
 	public void update() {
 		while (unprocessedMethods.hasNext()) {
 			MethodOrMethodContext m = unprocessedMethods.next();
-			Filter filter = new Filter(new EdgePredicate() {
-
-				@Override
-				public boolean want(Edge e) {
-					if (e.kind() == Kind.CLINIT)
-						return false;
-					else if (e.kind() == Kind.VIRTUAL) {
-						// We only filter calls to this.*
-						if (!e.src().isStatic() && e.srcStmt().getInvokeExpr() instanceof InstanceInvokeExpr) {
-							SootMethod refMethod = e.srcStmt().getInvokeExpr().getMethod();
-							InstanceInvokeExpr iinv = (InstanceInvokeExpr) e.srcStmt().getInvokeExpr();
-							if (iinv.getBase() == e.src().getActiveBody().getThisLocal()) {
-
-								// If our parent class P has an abstract
-								// method foo() and the lifecycle
-								// class L overrides foo(), make sure that
-								// all calls to P.foo() in the
-								// context of L only go to L.foo().
-								SootClass calleeClass = refMethod.getDeclaringClass();
-								if (Scene.v().getFastHierarchy().isSubclass(originalComponent, calleeClass)) {
-									SootClass targetClass = e.getTgt().method().getDeclaringClass();
-									return targetClass == originalComponent
-											|| Scene.v().getFastHierarchy().isSubclass(targetClass, originalComponent);
-								}
-							}
-
-							// We do not expect callback registrations in
-							// any
-							// calls to system classes
-							if (SystemClassHandler.isClassInSystemPackage(refMethod.getDeclaringClass().getName()))
-								return false;
-						}
-					} else if (config.getCallbackConfig().getFilterThreadCallbacks()) {
-						// Check for thread call edges
-						if (e.kind() == Kind.THREAD || e.kind() == Kind.EXECUTOR)
-							return false;
-
-						// Some apps have a custom layer for managing
-						// threads,
-						// so we need a more generic model
-						if (e.tgt().getName().equals("run"))
-							if (Scene.v().getFastHierarchy().canStoreType(e.tgt().getDeclaringClass().getType(),
-									RefType.v("java.lang.Runnable")))
-								return false;
-					}
-					return true;
-				}
-
-			});
+			Filter filter = createEdgeFilter();
 			Iterator<Edge> targets = filter.wrap(Scene.v().getCallGraph().edgesOutOf(m));
 			addMethods(new Targets(targets));
 		}
+	}
+
+	/**
+	 * Creates a new edge filter
+	 * @return The edge filter
+	 */
+	protected Filter createEdgeFilter(){
+		return new Filter(new EdgePredicate() {
+
+			@Override
+			public boolean want(Edge e) {
+				if (e.kind() == Kind.CLINIT)
+					return false;
+				else if (e.kind() == Kind.VIRTUAL) {
+					// We only filter calls to this.*
+					if (!e.src().isStatic() && e.srcStmt().getInvokeExpr() instanceof InstanceInvokeExpr) {
+						SootMethod refMethod = e.srcStmt().getInvokeExpr().getMethod();
+						InstanceInvokeExpr iinv = (InstanceInvokeExpr) e.srcStmt().getInvokeExpr();
+						if (iinv.getBase() == e.src().getActiveBody().getThisLocal()) {
+
+							// If our parent class P has an abstract
+							// method foo() and the lifecycle
+							// class L overrides foo(), make sure that
+							// all calls to P.foo() in the
+							// context of L only go to L.foo().
+							SootClass calleeClass = refMethod.getDeclaringClass();
+							if (Scene.v().getFastHierarchy().isSubclass(originalComponent, calleeClass)) {
+								SootClass targetClass = e.getTgt().method().getDeclaringClass();
+								return targetClass == originalComponent
+										|| Scene.v().getFastHierarchy().isSubclass(targetClass, originalComponent);
+							}
+						}
+
+						// We do not expect callback registrations in
+						// any
+						// calls to system classes
+						if (SystemClassHandler.isClassInSystemPackage(refMethod.getDeclaringClass().getName()))
+							return false;
+					}
+				} else if (config.getCallbackConfig().getFilterThreadCallbacks()) {
+					// Check for thread call edges
+					if (e.kind() == Kind.THREAD || e.kind() == Kind.EXECUTOR)
+						return false;
+
+					// Some apps have a custom layer for managing
+					// threads,
+					// so we need a more generic model
+					if (e.tgt().getName().equals("run"))
+						if (Scene.v().getFastHierarchy().canStoreType(e.tgt().getDeclaringClass().getType(),
+								RefType.v("java.lang.Runnable")))
+							return false;
+				}
+				return true;
+			}
+		});
 	}
 
 	/**

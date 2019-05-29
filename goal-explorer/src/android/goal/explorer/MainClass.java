@@ -1,7 +1,7 @@
 package android.goal.explorer;
 
-import android.goal.explorer.cmd.CmdLineParser;
-import android.goal.explorer.cmd.GlobalConfig;
+import android.goal.explorer.cmdline.CmdLineParser;
+import android.goal.explorer.cmdline.GlobalConfig;
 
 public class MainClass {
     public static void main(String[] args) throws Exception {

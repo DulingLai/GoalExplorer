@@ -56,7 +56,7 @@ public class STG {
     /**
      * Constructor for STG that initialize STG with service and broadcast receiver nodes
      */
-    public STG() {
+    public STG(App app) {
         // initialize empty sets
         this.screenNodeSet = Collections.synchronizedSet(new HashSet<>());
         this.serviceNodeSet = Collections.synchronizedSet(new HashSet<>());
@@ -66,10 +66,10 @@ public class STG {
         this.inEdgeMap = new HashMultiMap<>();
 
         // create initial nodes
-        for (Service service : App.v().getServices()) {
+        for (Service service : app.getServices()) {
             this.serviceNodeSet.add(new ServiceNode(service));
         }
-        for (BroadcastReceiver receiver : App.v().getBroadcastReceivers()) {
+        for (BroadcastReceiver receiver : app.getBroadcastReceivers()) {
             this.broadcastReceiverNodeSet.add(new BroadcastReceiverNode(receiver));
         }
     }

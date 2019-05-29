@@ -100,35 +100,4 @@ public class Service extends AbstractComponent {
     public void addLifecycleMethod(MethodOrMethodContext lifecycleMethod) {
         this.lifecycleMethods.add(lifecycleMethod);
     }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((intentFilters == null) ? 0 : intentFilters.hashCode());
-        result = prime * result + ((listeners == null) ? 0 : listeners.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-
-        Service other = (Service) obj;
-        if (intentFilters == null) {
-            if (other.intentFilters != null)
-                return false;
-        } else if (!intentFilters.equals(other.intentFilters))
-            return false;
-        if (listeners == null) {
-            return other.listeners == null;
-        } else return listeners.equals(other.listeners);
-    }
 }

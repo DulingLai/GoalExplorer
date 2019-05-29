@@ -1,6 +1,6 @@
 import android.goal.explorer.STGExtractor;
-import android.goal.explorer.cmd.CmdLineParser;
-import android.goal.explorer.cmd.GlobalConfig;
+import android.goal.explorer.cmdline.CmdLineParser;
+import android.goal.explorer.cmdline.GlobalConfig;
 import android.goal.explorer.model.App;
 import android.goal.explorer.model.component.Activity;
 import android.goal.explorer.model.component.BroadcastReceiver;

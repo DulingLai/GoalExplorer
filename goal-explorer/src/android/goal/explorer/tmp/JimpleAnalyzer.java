@@ -1,6 +1,6 @@
 package android.goal.explorer.tmp;
 
-import android.goal.explorer.cmd.GlobalConfig;
+import android.goal.explorer.cmdline.GlobalConfig;
 import soot.*;
 import soot.jimple.InvokeExpr;
 import soot.jimple.Stmt;

@@ -110,7 +110,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 
 	protected ISourceSinkDefinitionProvider sourceSinkProvider;
 	protected MultiMap<SootClass, CallbackDefinition> callbackMethods = new HashMultiMap<>();
-	protected MultiMap<SootClass, SootClass> fragmentClasses = new HashMultiMap<>();
+	private MultiMap<SootClass, SootClass> fragmentClasses = new HashMultiMap<>();
 
 	protected InfoflowAndroidConfiguration config = new InfoflowAndroidConfiguration();
 
@@ -120,6 +120,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	protected IccInstrumenter iccInstrumenter = null;
 
 	protected ARSCFileParser resources = null;
+	private LayoutFileParser lfp = null;
 
 	protected ProcessManifest manifest = null;
 	protected IValueProvider valueProvider = null;
@@ -419,6 +420,22 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	}
 
 	/**
+	 * Gets the fragment classes
+	 * @return The fragment classes mapped to activity classes
+	 */
+	public MultiMap<SootClass, SootClass> getFragmentClasses() {
+		return fragmentClasses;
+	}
+
+	/**
+	 * Gets the callbacks collected
+	 * @return The callbacks collected by FlowDroid
+	 */
+	public MultiMap<SootClass, CallbackDefinition> getCallbackMethods() {
+		return callbackMethods;
+	}
+
+	/**
 	 * Parses common app resources such as the manifest file
 	 * 
 	 * @throws IOException            Thrown if the given source/sink file could not
@@ -479,7 +496,6 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	private void calculateCallbacks(ISourceSinkDefinitionProvider sourcesAndSinks, SootClass entryPoint)
 			throws IOException, XmlPullParserException {
 		// Add the callback methods
-		LayoutFileParser lfp = null;
 		if (config.getCallbackConfig().getEnableCallbacks()) {
 			if (callbackClasses != null && callbackClasses.isEmpty()) {
 				logger.warn("Callback definition file is empty, disabling callbacks");
@@ -1670,6 +1686,14 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 */
 	public IInfoflowConfig getSootConfig() {
 		return this.sootConfig;
+	}
+
+	/**
+	 * Gets the layout file parser
+	 * @return The layout file parser
+	 */
+	public LayoutFileParser getLayoutFileParser() {
+		return lfp;
 	}
 
 	/**

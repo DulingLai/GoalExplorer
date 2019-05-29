@@ -1,4 +1,4 @@
-package android.goal.explorer.data.android;
+package android.goal.explorer.data.android.constants;
 
 public class ClassConstants {
 

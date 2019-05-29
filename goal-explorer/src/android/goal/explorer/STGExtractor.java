@@ -1,9 +1,9 @@
 package android.goal.explorer;
 
-import android.goal.explorer.cmd.GlobalConfig;
+import android.goal.explorer.cmdline.GlobalConfig;
 import android.goal.explorer.model.App;
 import android.goal.explorer.model.stg.STG;
-import org.pmw.tinylog.Logger;
+import android.goal.explorer.topology.TopologyExtractor;
 import soot.jimple.infoflow.android.SetupApplication;
 import soot.jimple.infoflow.android.manifest.ProcessManifest;
 
@@ -11,7 +11,6 @@ public class STGExtractor {
     // Logging tags
     private static final String RESOURCE_PARSER = "ResourceParser";
     private static final String FRAGMENT_ANALYZER = "FragmentAnalyzer";
-    private static final String SCREEN_ANALYZER = "ScreenAnalyzer";
     private static final String CALLBACK_ANALYZER = "CallbackAnalyzer";
     private static final String CLASS_ANALYZER = "JimpleAnalyzer";
     private static final String ICC_PARSER = "IccParser";
@@ -20,8 +19,14 @@ public class STGExtractor {
     // Configuration
     private GlobalConfig config;
 
+    // Manifest
+    private ProcessManifest manifest;
+
+    // App model
+    private App app;
+
     // Setup application
-    private SetupApplication app;
+//    private SetupApplication app;
 
     // Screen transition graph
     private STG stg;
@@ -35,9 +40,12 @@ public class STGExtractor {
         this.config = config;
 
         // Setup the app using FlowDroid
-        app = new SetupApplication(
+        SetupApplication setupApplication = new SetupApplication(
                 config.getFlowdroidConfig().getAnalysisFileConfig().getAndroidPlatformDir(),
                 config.getFlowdroidConfig().getAnalysisFileConfig().getTargetAPKFile());
+
+        // initialize app model
+        initialize(setupApplication);
     }
 
 
@@ -46,25 +54,28 @@ public class STGExtractor {
      */
     public void constructSTG() {
 
-        // initialize the app model
-        initialize();
-
         // initialize the STG with services and broadcast receivers
-        stg = new STG();
+        stg = new STG(app);
 
-        // step 1.
-        Logger.debug("here");
+        // topology - time out per component (minute), number of thread (default: 16)
+        TopologyExtractor topologyExtractor = new TopologyExtractor(app, config.getTimeout(),config.getNumThread());
+        topologyExtractor.extractTopopology();
+
+        // build the initial screens
+
     }
+
 
     /**
      * initialize the app model
      */
-    public void initialize() {
+    public void initialize(SetupApplication setupApplication) {
         // Construct the callgraph
-        app.constructCallgraph();
+        setupApplication.constructCallgraph();
 
         // initialize the model
-        App.v().initializeAppModel(app);
+        app = new App();
+        app.initializeAppModel(setupApplication);
     }
 
     /**
@@ -72,7 +83,7 @@ public class STGExtractor {
      * @return The manifest of the app
      */
     public ProcessManifest getManifest() {
-        return app.getManifest();
+        return manifest;
     }
 
     /**
@@ -80,7 +91,7 @@ public class STGExtractor {
      * @return The number of activities
      */
     public Integer getNumActInManifest() {
-        return app.getManifest().getActivities().size();
+        return manifest.getActivities().size();
     }
 
     /**
@@ -88,7 +99,7 @@ public class STGExtractor {
      * @return The number of services
      */
     public Integer getNumServiceInManifest() {
-        return app.getManifest().getServices().size();
+        return manifest.getServices().size();
     }
 
     /**
@@ -96,6 +107,6 @@ public class STGExtractor {
      * @return The number of broadcast receivers
      */
     public Integer getNumReceiverInManifest() {
-        return app.getManifest().getReceivers().size();
+        return manifest.getReceivers().size();
     }
 }

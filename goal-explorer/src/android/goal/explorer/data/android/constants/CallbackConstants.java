@@ -1,4 +1,4 @@
-package android.goal.explorer.data.android;
+package android.goal.explorer.data.android.constants;
 
 import com.google.common.collect.ImmutableMap;
 

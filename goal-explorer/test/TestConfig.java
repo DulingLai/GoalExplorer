@@ -1,5 +1,3 @@
-import android.goal.explorer.cmd.GlobalConfig;
-
 public class TestConfig {
     /**
      * Gets the command line arguments for testing

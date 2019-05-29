@@ -1,6 +1,5 @@
-package android.goal.explorer.cmd;
+package android.goal.explorer.cmdline;
 
-import android.goal.explorer.STGExtractor;
 import android.goal.explorer.utils.FileUtil;
 import org.apache.commons.cli.*;
 import org.apache.log4j.LogManager;
@@ -25,6 +24,7 @@ public class CmdLineParser {
     // Analysis Config
     private static final String OPTION_MAX_CALLBACK = "c";
     private static final String OPTION_MAX_TIMEOUT = "t";
+    private static final String OPTION_NUM_THREAD = "n";
 
     // Android
     private static final String OPTION_ANDROID_SDK_PATH = "s";
@@ -51,14 +51,16 @@ public class CmdLineParser {
         Option apiLevel = Option.builder(OPTION_ANDROID_API_LEVEL).required(false).type(Number.class).longOpt("api").hasArg(true).desc("api level (default to 23)").build();
         Option iccModel = Option.builder(OPTION_ICC_MODEL).required(false).longOpt("model").hasArg(true).desc("icc model (default to match the package name").build();
         Option maxCallback = Option.builder(OPTION_MAX_CALLBACK).required(false).type(Number.class).hasArg(true).desc("the maximum number of callbacks modeled for each component (default to 100)").build();
-        Option timeOut = Option.builder(OPTION_MAX_TIMEOUT).required(false).hasArg(true).desc("maximum timeout during callback analysis in seconds (default: 60)").build();
+        Option timeOut = Option.builder(OPTION_MAX_TIMEOUT).required(false).hasArg(true).desc("maximum timeout analyzing each component in minutes (default: 5)").build();
+        Option numThread = Option.builder(OPTION_NUM_THREAD).required(false).hasArg(true).desc("the number of threads used for multi-threading analysis. Adjust to the number of CPU cores for better performance (default: 16)").build();
         Option debug = new Option(OPTION_DEBUG, "debug", false, "debug mode (default disabled)");
         Option help = new Option(OPTION_HELP, "help", false, "print the help message");
         Option version = new Option( OPTION_VERSION,"version", false,"print version info" );
 
         // add the options
         options.addOption(input).addOption(output).addOption(config).addOption(sdkPath).addOption(apiLevel).addOption(iccModel);
-        options.addOption(timeOut).addOption(maxCallback).addOption(debug).addOption(help).addOption(version);
+        options.addOption(timeOut).addOption(maxCallback).addOption(numThread);
+        options.addOption(debug).addOption(help).addOption(version);
     }
 
     /**
@@ -113,7 +115,11 @@ public class CmdLineParser {
         }
         if (cmd.hasOption(OPTION_MAX_TIMEOUT)) {
             Integer maxTimeout = parseIntOption(cmd, OPTION_MAX_TIMEOUT);
-            config.getFlowdroidConfig().getCallbackConfig().setMaxCallbacksPerComponent(maxTimeout);
+            config.setTimeout(maxTimeout);
+        }
+        if (cmd.hasOption(OPTION_NUM_THREAD)) {
+            Integer numThread = parseIntOption(cmd, OPTION_NUM_THREAD);
+            config.setNumThread(numThread);
         }
 
         // log level setting (debug/info/production)

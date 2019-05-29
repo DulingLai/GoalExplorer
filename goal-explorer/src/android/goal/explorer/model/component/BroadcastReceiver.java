@@ -23,22 +23,6 @@ public class BroadcastReceiver extends AbstractComponent {
                 AxmlUtils.processIntentFilter(node, IntentFilter.Type.Category));
     }
 
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (!super.equals(obj))
-            return false;
-        return getClass() == obj.getClass();
-    }
-
     /**
      * Gets the intent filters declared by this broadcast receiver
      * @return The set of IntentFilters
@@ -53,5 +37,33 @@ public class BroadcastReceiver extends AbstractComponent {
      */
     public void addIntentFilter(IntentFilter intentFilter) {
         intentFilters.add(intentFilter);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((intentFilters == null) ? 0 : intentFilters.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null || this.getClass() == obj.getClass())
+            return false;
+        if (!super.equals(obj))
+            return false;
+
+        BroadcastReceiver other = (BroadcastReceiver) obj;
+
+        if (this.getIntentFilters() == null) {
+            return  other.getIntentFilters() == null;
+        } else if (other.getIntentFilters() == null) {
+            return false;
+        } else {
+            return this.getIntentFilters().equals(other.getIntentFilters());
+        }
     }
 }

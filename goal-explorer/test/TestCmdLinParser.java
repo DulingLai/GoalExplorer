@@ -1,4 +1,4 @@
-import android.goal.explorer.cmd.CmdLineParser;
+import android.goal.explorer.cmdline.CmdLineParser;
 import org.apache.commons.io.FileUtils;
 
 import org.junit.Test;

@@ -312,7 +312,7 @@ public class AndroidEntryPointCreator extends AbstractAndroidEntryPointCreator i
 		for (SootClass currentClass : components) {
 			// Is this the application class?
 			if (entryPointUtils.isApplicationClass(currentClass) && currentClass.getName().equals(applicationName)) {
-				if (applicationClass != null && currentClass != applicationClass)
+				if (applicationClass != null && !currentClass.getName().equals(applicationClass.getName()))
 					throw new RuntimeException("Multiple application classes in app");
 				applicationClass = currentClass;
 				break;

@@ -8,7 +8,7 @@ import soot.jimple.infoflow.android.callbacks.ComponentReachableMethods;
 
 import java.util.*;
 
-public class Fragment extends AbstractComponent{
+public class Fragment extends AbstractComponent {
 
     private Set<Listener> listeners;
     private Set<AbstractWidget> widgets;
@@ -16,7 +16,6 @@ public class Fragment extends AbstractComponent{
     private Integer resourceId;
     private Set<Activity> parentActivities;
 
-    private LinkedList<MethodOrMethodContext> lifecycleMethods;
     private Set<MethodOrMethodContext> menuRegistrationMethods;
     private Set<MethodOrMethodContext> menuCallbackMethods;
     // reachable methods
@@ -25,7 +24,6 @@ public class Fragment extends AbstractComponent{
     public Fragment(SootClass sootClass, Activity parentActivity) {
         super(sootClass.getName(), sootClass);
         this.parentActivities = new HashSet<>(Collections.singletonList(parentActivity));
-        this.lifecycleMethods = new LinkedList<>();
         this.menuRegistrationMethods = new HashSet<>();
         this.menuCallbackMethods = new HashSet<>();
         this.lifecycleReachableMethods = new LinkedHashMap<>();
@@ -90,30 +88,6 @@ public class Fragment extends AbstractComponent{
      */
     public void AddParentActivity(Activity parentActivity) {
         this.parentActivities.add(parentActivity);
-    }
-
-    /**
-     * Gets the lifecycle methods of this fragment
-     * @return The lifecycle methods
-     */
-    public LinkedList<MethodOrMethodContext> getLifecycleMethods() {
-        return lifecycleMethods;
-    }
-
-    /**
-     * Adds the lifecycle methods to this fragment
-     * @param lifecycleMethods The lifecycle methods to be set
-     */
-    public void addLifecycleMethods(LinkedList<MethodOrMethodContext> lifecycleMethods) {
-        this.lifecycleMethods.addAll(lifecycleMethods);
-    }
-
-    /**
-     * Adds a lifecycle method to this fragment
-     * @param lifecycleMethod The lifecycle method to be added
-     */
-    public void addLifecycleMethod(MethodOrMethodContext lifecycleMethod) {
-        this.lifecycleMethods.add(lifecycleMethod);
     }
 
     /**
@@ -210,33 +184,12 @@ public class Fragment extends AbstractComponent{
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (obj == null || getClass() != obj.getClass())
             return false;
         if (!super.equals(obj))
             return false;
-        if (getClass() != obj.getClass())
-            return false;
 
         Fragment other = (Fragment) obj;
-
-        if (listeners == null) {
-            if (other.listeners != null)
-                return false;
-        } else if (!listeners.equals(other.listeners))
-            return false;
-
-        if (parentActivities == null) {
-            if (other.parentActivities != null)
-                return false;
-        } else if (!parentActivities.equals(other.parentActivities))
-            return false;
-
-        if (widgets == null) {
-            if (other.widgets != null)
-                return false;
-        } else if (!widgets.equals(other.widgets))
-            return false;
-
-        return resourceId.equals(other.resourceId);
+        return this.getMainClass().equals(other.getMainClass());
     }
 }
