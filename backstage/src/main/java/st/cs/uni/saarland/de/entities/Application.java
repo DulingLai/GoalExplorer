@@ -6,22 +6,23 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import st.cs.uni.saarland.de.helpClasses.Helper;
+import st.cs.uni.saarland.de.reachabilityAnalysis.UiElement;
 
 import java.util.*;
 
 // class where the data of the whole currently analysed app and the results of the analysis is stored
 public class Application {
-    // TODO chane to one instance?
-
 
     private String name; // name of the application
-    // TODO map of AppsUIElement here: <counter, appsUIElemnt>
     private Map<Integer, AppsUIElement> uiElementsOfApp;
+    private Map<Integer, UiElement> uiElementsWithListener;
     // set of all XML files inside the res folder of the unpacked app, <counter of layout, XMLayoutFile object>
     private Map<Integer, XMLLayoutFile> xmlLayoutFiles;
-    // TODO move to activity/screen class? and make set instead of list
     // list of all dialog this app has
     private Map<Integer, Dialog> dialogs;
+
+    // list of all menus
+    private Map<Integer, Menu> menus;
 
     public Set<String> getPermissions() {
         return permissions;
@@ -39,6 +40,15 @@ public class Application {
         return activities;
     }
 
+    public Activity getActivityByName(String name) {
+        for (Activity activity : activities) {
+            if (name.equalsIgnoreCase(activity.getName())) {
+                return activity;
+            }
+        }
+        return null;
+    }
+
     public void addActivity(Activity activity){
         this.activities.add(activity);
     }
@@ -52,7 +62,7 @@ public class Application {
     private Set<Integer> fragmentTagIDs = new HashSet<>();
     @Deprecated
     private List<Screen> screens; // list of all screens eg all screens that a user would see
-    // TODO these maps could maybe be removed -> problm. how to save hierarchy
+    // TODO these maps could maybe be removed -> problem. how to save hierarchy
     // map of matchings between an activity and the displayed XMLLayoutFiles
     @XStreamOmitField
     private final Map<String, Set<Integer>> activityToXMLLayoutFiles; // Map<ActivityClassName, Set<LayoutIDs>>
@@ -62,7 +72,7 @@ public class Application {
     // TOOD move to activities? -> probl. how to save hierarchy
     private List<String> intentFilters; // list of all intent-filters the app claims
     // list of all dialogs that where found inside the app's code
-    // TODO also moved to corresponding activity? -> probl. how to save hierarchy
+    // TODO also moved to corresponding activity? -> problem. how to save hierarchy
 
     private final Logger logger = LoggerFactory.getLogger(Thread.currentThread().getName());
 
@@ -80,6 +90,9 @@ public class Application {
         mergedLayoutFileIDs = new HashMap<>();
         fragmentClassToLayout = new HashMap<>();
         uiElementsOfApp = new HashMap<>();
+        uiElementsWithListener = new HashMap<>();
+
+        menus = new HashMap<>();
     }
 
 
@@ -130,13 +143,13 @@ public class Application {
     }
 
     // store the views of a fragment onCreateView method
-    public void addFragmentClassToViewIDs(String fragmentName, Set<Integer> playoutIDs) {
+    public void addFragmentClassToViewIDs(String fragmentName, Set<Integer> layout) {
         if (!StringUtils.isBlank(fragmentName)) {
             if (fragmentClassToLayout.containsKey(fragmentName)) {
                 Set<Integer> layoutIDs = fragmentClassToLayout.get(fragmentName);
-                layoutIDs.addAll(playoutIDs);
+                layoutIDs.addAll(layout);
             } else {
-                fragmentClassToLayout.put(fragmentName, playoutIDs);
+                fragmentClassToLayout.put(fragmentName, layout);
             }
         }
     }
@@ -172,11 +185,11 @@ public class Application {
 
     @Override
     public String toString() {
-        String str = "appName: " + name + System.getProperty("line.separator");
+        StringBuilder str = new StringBuilder("appName: " + name + System.getProperty("line.separator"));
         for (XMLLayoutFile sc : xmlLayoutFiles.values()) {
-            str = str + sc.toString() + System.getProperty("line.separator");
+            str.append(sc.toString()).append(System.getProperty("line.separator"));
         }
-        return str;
+        return str.toString();
     }
 
     // returns a string with all information about all AppsUiElements of the app
@@ -220,7 +233,7 @@ public class Application {
 
     // returns a Menu object with the same data than the XMLLayoutFile with the xmlLayoutFileID
     // and replaces the XMLLayoutFile object with the Menu object in the list of all XMLLayoutFiles in this class
-    public Menu expandXMLLayoutFileWithMenu(int xmlLayoutFileID) throws IllegalArgumentException {
+    public void expandXMLLayoutFileWithMenu(int xmlLayoutFileID) throws IllegalArgumentException {
         Menu menu = null;
         XMLLayoutFile deleteFile = null;
         // search the XMLLayoutFile with the id , xmlLayoutFileID
@@ -230,16 +243,42 @@ public class Application {
             menu = new Menu(xmlF);
             // remember the XMLLayouFile
             deleteFile = xmlF;
-        } else
-            // if the given XMLLayoutFile is a Menu just return it
-            return (Menu) xmlF;
 
-        if ((menu == null) || (deleteFile == null))
-            throw new IllegalArgumentException("no XMLLayoutFile with the given ID found: " + xmlLayoutFileID);
-        // replace the XMLLayoutFile object with the Menu object
-        xmlLayoutFiles.put(menu.getId(), menu);
-        // returns the former XMLLayoutFile with the id xmlLayoutFileID as Menu object
-        return menu;
+            if ((menu == null) || (deleteFile == null))
+                throw new IllegalArgumentException("no XMLLayoutFile with the given ID found: " + xmlLayoutFileID);
+            // replace the XMLLayoutFile object with the Menu object
+            xmlLayoutFiles.put(menu.getId(), menu);
+        } else {
+            // if the given XMLLayoutFile is a Menu just return it
+            menu = (Menu) xmlF;
+        }
+        this.menus.put(menu.getId(), menu);
+    }
+
+    /**
+     * Updates the menu with the given menu id and menu
+     * @param menuId the resource ID of the menu
+     * @param menu the menu to update
+     */
+    public void updateMenu(Integer menuId, Menu menu) {
+        this.menus.replace(menuId, menu);
+    }
+
+    /**
+     * Adds the menu with the given menu id and menu
+     * @param menuId the resource ID of the menu
+     * @param menu the menu to update
+     */
+    public void addMenu(Integer menuId, Menu menu) {
+        this.menus.put(menuId, menu);
+    }
+
+    /**
+     * Gets the menu map
+     * @return map resource ID to menu object
+     */
+    public Map<Integer, Menu> getMenus() {
+        return menus;
     }
 
     // replaces the AppsUIElement with a SpecialXMLTag(including all its data) and returns the new SpecialXMLTag
@@ -386,6 +425,18 @@ public class Application {
 
     public Map<Integer, Dialog> getDialogs() {
         return dialogs;
+    }
+
+    public UiElement getUiElementWithListenerById(Integer resId) {
+        return uiElementsWithListener.get(resId);
+    }
+
+    public Collection<UiElement> getUiElementsWithListeners() {
+        return uiElementsWithListener.values();
+    }
+
+    public void addUiElementsWithListener(Integer resId, UiElement distinctUiElement) {
+        this.uiElementsWithListener.put(resId, distinctUiElement);
     }
 }
 

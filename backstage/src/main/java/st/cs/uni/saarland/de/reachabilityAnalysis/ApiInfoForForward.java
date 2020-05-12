@@ -7,6 +7,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamConverter;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import soot.SootClass;
 import soot.SootMethod;
 import st.cs.uni.saarland.de.helpClasses.Helper;
 
@@ -45,7 +46,7 @@ public class ApiInfoForForward {
 	
 	@Override
 	public boolean equals(Object obj){
-		if(obj == null || !(obj instanceof ApiInfoForForward)){
+		if(!(obj instanceof ApiInfoForForward)){
 			return false;
 		}
 		

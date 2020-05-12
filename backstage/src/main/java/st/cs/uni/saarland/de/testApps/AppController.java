@@ -71,6 +71,7 @@ public class AppController {
                     uiE.addListener(l);
                 }
             }
+            app.updateMenu(menuID, menu);
         } catch (NullPointerException e) {
             logger.error("AppController:addDataToMenuObject: XMLLayoutFile not found with id: " + menuID);
             Helper.saveToStatisticalFile("AppController:addDataToMenuObject: XMLLayoutFile not found with id: " + menuID);
@@ -442,6 +443,14 @@ public class AppController {
         reachabilityElement.kindOfElement = kindOfElement;
         reachabilityElement.text.putAll(text);
         return reachabilityElement;
+    }
+
+    public void updateUiElement(Integer resId, UiElement uiElement) {
+        app.addUiElementsWithListener(resId, uiElement);
+    }
+
+    public Application getApp() {
+        return app;
     }
 
 /*

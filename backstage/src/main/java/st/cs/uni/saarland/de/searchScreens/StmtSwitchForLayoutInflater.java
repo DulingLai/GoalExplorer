@@ -16,7 +16,7 @@ import java.util.Map.Entry;
 public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 
 //	private Map<String, LayoutInfo> layouts = new HashMap<String, LayoutInfo>(); // Map<MainLayoutReg (searchedUiElement), LayoutInfo>
-	protected Set<SootMethod> callStack = new HashSet<SootMethod>();
+	protected Set<SootMethod> callStack = new HashSet<>();
 
 	// this constructor is for analysing methods which know the main Layout (Reg), e.g. "View getView"
 	public StmtSwitchForLayoutInflater(String mainLayoutReg, int id, boolean searchOnlyId, SootMethod m){
@@ -59,7 +59,7 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 			return;
 		}
 		String param = stmt.getLeftOp().toString();
-		Map<Integer, LayoutInfo> toAddLayouts = new HashMap<Integer, LayoutInfo>();
+		Map<Integer, LayoutInfo> toAddLayouts = new HashMap<>();
 		int toRemoveLayout = -1;
 		for (Entry<Integer, LayoutInfo> entry : getResultedLayouts().entrySet()){
 			if(Thread.currentThread().isInterrupted()){
@@ -67,14 +67,14 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 			}
 			LayoutInfo info = entry.getValue();
 			
-			if((info.getLayoutIDReg().equals(param) && stmt.getRightOp() instanceof ParameterRef) || (info.getLayoutReg().equals(param) && stmt.getRightOp() instanceof ParameterRef)){
+			if((info.getLayoutIDReg().equals(param) && stmt.getRightOp() instanceof ParameterRef) ||
+					(info.getLayoutReg().equals(param) && stmt.getRightOp() instanceof ParameterRef)){
 				info.setLayoutIDReg("");
 				info.setLayoutReg("");
 				info.setCompletlyProcessed();
 				toRemoveLayout = info.getID();
-				
-				List<SootMethod> localCallStack = new ArrayList<SootMethod>();
-				localCallStack.addAll(callStack);
+
+				List<SootMethod> localCallStack = new ArrayList<>(callStack);
 				
 				if ((callStack != null) && (getCurrentSootMethod() != null)){
 					if(callStack.contains(getCurrentSootMethod())){
@@ -83,14 +83,15 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 					// FIXME ask if this stmt should be better after this if clause?
 					callStack.add(getCurrentSootMethod());
 				}else{
-					callStack = new HashSet<SootMethod>();
+					callStack = new HashSet<>();
 				}
 				
 				ParameterRef pRef = (ParameterRef)stmt.getRightOp();
 				int argumentIndex = pRef.getIndex();
-				Map<Integer, LayoutInfo> res = interprocMethods2.findInReachableMethodsForLayouts(argumentIndex, getCurrentSootMethod(), new HashSet<SootMethod>(callStack));
+				Map<Integer, LayoutInfo> res = interprocMethods2.findInReachableMethodsForLayouts(argumentIndex,
+						getCurrentSootMethod(), new HashSet<>(callStack));
 				if (res.size() > 0){
-					List<Integer> addedLayIds = new ArrayList<Integer>();
+					List<Integer> addedLayIds = new ArrayList<>();
 					for (Entry<Integer, LayoutInfo> foundLay: res.entrySet()){
 						LayoutInfo lay = foundLay.getValue();
 						// only if isFragment is set, this layout is the layout we searched for (in comparison to eg addedLayouts)
@@ -180,8 +181,8 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 		String leftReg = helpMethods.getLeftRegOfAssignStmt(stmt);	
 		// check if any stored Layout is affected by this stmt
 //		if (layouts.containsKey(leftReg)){
-		Map<Integer, LayoutInfo> toAddLayouts = new HashMap<Integer, LayoutInfo>();
-		List<Integer> toRemoveLayoutIDs = new ArrayList<Integer>();
+		Map<Integer, LayoutInfo> toAddLayouts = new HashMap<>();
+		List<Integer> toRemoveLayoutIDs = new ArrayList<>();
 		for (final Entry<Integer, LayoutInfo> tmp : getResultedLayouts().entrySet()){
 			if(Thread.currentThread().isInterrupted()){
 				return;
@@ -189,7 +190,6 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 			LayoutInfo info = tmp.getValue();
 			
 			if (stmt.containsInvokeExpr()){
-				
 //				if (!info.getLayoutReg().equals(leftReg))
 //					continue;
 //				
@@ -227,10 +227,10 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 								try{
 									assert false: rootView.equals("");
 								
-									rootLayout = new LayoutInfo(rootView, Content.getInstance().getNewUniqueID());
+									rootLayout = new LayoutInfo(rootView, Content.getNewUniqueID());
 									toAddLayouts.put(rootLayout.getID(), rootLayout);
 								}catch (AssertionError e){
-									logger.error(e.getStackTrace().toString());
+									logger.error(Arrays.toString(e.getStackTrace()));
 									continue;
 								}
 							}
@@ -240,7 +240,7 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 								info.addLayouts(rootLayout.getID());
 								rootLayout.addRootLayout(info.getID());
 							}
-						}					
+						}
 					
 					}else if ("android.view.View inflate(android.content.Context,int,android.view.ViewGroup)".equals(invokeExpr.getMethod().getSubSignature())){
 						info.setLayoutReg("");
@@ -449,7 +449,7 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 			
 			// setContentView(2152358)
 			if (invokeExpr.getArg(0) instanceof IntConstant){
-				LayoutInfo newLayout = new LayoutInfo("", Content.getInstance().getNewUniqueID());
+				LayoutInfo newLayout = new LayoutInfo("", Content.getNewUniqueID());
 				newLayout.setLayoutID(parameterReg);
 				newLayout.setSetContentViewLayout();
 				newLayout.setActivityNameOfView(activityName);
@@ -458,7 +458,7 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 				
 			// setContentView($r4)-> $r4 is Layout
 			}else if ("int".equals(paramSpecialType)){
-				LayoutInfo newLayout = new LayoutInfo("", Content.getInstance().getNewUniqueID());
+				LayoutInfo newLayout = new LayoutInfo("", Content.getNewUniqueID());
 				newLayout.setLayoutIDReg(parameterReg);
 				newLayout.setSetContentViewLayout();
 				newLayout.setActivityNameOfView(activityName);
@@ -477,7 +477,7 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 				// check if it is a known layout
 				if (foundLayout == null){
 					// setContentView is called with a layout as variable
-					foundLayout = new LayoutInfo(parameterReg, Content.getInstance().getNewUniqueID());
+					foundLayout = new LayoutInfo(parameterReg, Content.getNewUniqueID());
 					putToResultedLayouts(foundLayout.getID(), foundLayout);
 				}
 				if (foundLayout.getLayoutID().equals("")){
@@ -583,7 +583,7 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 				}
 				// if no rootView Layout is exitsting, create it
 				if (null == rootViewLayout){
-					rootViewLayout = new LayoutInfo(rootViewReg, Content.getInstance().getNewUniqueID());
+					rootViewLayout = new LayoutInfo(rootViewReg, Content.getNewUniqueID());
 					putToResultedLayouts(rootViewLayout.getID(), rootViewLayout);
 				}
 
@@ -598,7 +598,7 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 				}
 				// if no addedView Layout is exitsting, create it
 				if (null == addedViewLayout){
-					addedViewLayout = new LayoutInfo(addedViewReg, Content.getInstance().getNewUniqueID());
+					addedViewLayout = new LayoutInfo(addedViewReg, Content.getNewUniqueID());
 					putToResultedLayouts(addedViewLayout.getID(), addedViewLayout);
 				}
 
@@ -682,8 +682,8 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 			}else{
 				if(fInfo.methodToStart != null && fInfo.methodToStart.method().hasActiveBody()){
 					StmtSwitchForLayoutInflater newLayoutSwitch = new StmtSwitchForLayoutInflater(fInfo.register.getName(), info.getID(), searchLayoutID, fInfo.methodToStart.method());
-					previousFields.forEach(x->newLayoutSwitch.addPreviousField(x));
-					Set<SootMethod> localCallStack = new HashSet<SootMethod>(callStack);
+					previousFields.forEach(newLayoutSwitch::addPreviousField);
+					Set<SootMethod> localCallStack = new HashSet<>(callStack);
 					newLayoutSwitch.setCallStack(callStack);
 					iteratorHelper.runOverToFindSpecValuesBackwards(fInfo.methodToStart.method().getActiveBody(), fInfo.unitToStart, newLayoutSwitch);
 					callStack = localCallStack;
@@ -727,11 +727,8 @@ public class StmtSwitchForLayoutInflater extends MyStmtSwitchForResultLists {
 	
 	@Override
 	public boolean run(){
-		if (shouldBreak || getResultedLayouts().entrySet().stream().allMatch(x->x.getValue().isCompletlyProcessed())){
-			return false;
-		}else{
-			return true;
-		}
+		return !shouldBreak && !getResultedLayouts().entrySet().stream()
+				.allMatch(x -> x.getValue().isCompletlyProcessed());
 	}
 	
 

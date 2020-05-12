@@ -6,7 +6,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import soot.SootClass;
 import soot.VoidType;
 import soot.jimple.infoflow.android.axml.AXmlNode;
-import soot.jimple.infoflow.android.manifest.ProcessManifest;
+import soot.jimple.infoflow.android.manifest.Manifest;
 import st.cs.uni.saarland.de.helpClasses.Helper;
 import st.cs.uni.saarland.de.helpClasses.SootHelper;
 import st.cs.uni.saarland.de.testApps.AppController;
@@ -34,6 +34,7 @@ public class ReachabilityAnalysis implements Runnable {
     private Map<String, List<Map<String, List<String>>>> servicesToIntentFilters = new HashMap<>();
     private Map<String, List<Map<String, List<String>>>> activitiesToIntentFilters = new HashMap<>();
     private Map<String, List<Map<String, List<String>>>> receiversToIntentFilters = new HashMap<>();
+    private List<UiElement> processedUiElement;
     private final Set<ResultsSaver> resultsSavers = new HashSet<>();
 
     public ReachabilityAnalysis(List<UiElement> uiElements, Set<String> sourcesSinksSignatures, TimeUnit rTimeUnit, int rTimeValue, String apkPath, int depthMethodLevel, boolean loadUiRes, boolean limitByPackageName){
@@ -72,7 +73,7 @@ public class ReachabilityAnalysis implements Runnable {
 
     private void retrieveIntentFilters(){
         try {
-            ProcessManifest processMan = new ProcessManifest(apkPath);
+            Manifest processMan = new Manifest(apkPath);
             String packageName = processMan.getPackageName();
             List<AXmlNode> activities = processMan.getActivities();
             List<AXmlNode> services = processMan.getServices();
@@ -82,10 +83,7 @@ public class ReachabilityAnalysis implements Runnable {
             servicesToIntentFilters.putAll(getIntentFilters(packageName, services));
             activitiesToIntentFilters.putAll(getIntentFilters(packageName, activities));
             receiversToIntentFilters.putAll(getIntentFilters(packageName, receivers));
-        } catch (IOException e) {
-            e.printStackTrace();
-            Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
-        } catch (XmlPullParserException e) {
+        } catch (IOException | XmlPullParserException e) {
             e.printStackTrace();
             Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
         }
@@ -144,8 +142,7 @@ public class ReachabilityAnalysis implements Runnable {
     }
 
     private Map<UiElement, List<ApiInfoForForward>> getResults(List<UiElement> uiElements) {
-        List<UiElement> localUiElements = new ArrayList<>();
-        localUiElements.addAll(uiElements.stream().distinct().collect(Collectors.toList()));
+        List<UiElement> localUiElements = uiElements.stream().distinct().collect(Collectors.toList());
 
         final int callbacksFromUIAnalysis = localUiElements.size();
         String msg = String.format("Found %s callback methods from UI Analysis", callbacksFromUIAnalysis);
@@ -168,78 +165,80 @@ public class ReachabilityAnalysis implements Runnable {
 
         List<Future<Void>> tasks = new ArrayList<>();
         localUiElements.forEach(callbackToAnalyze -> {
-            tasks.add(mainExecutor.submit(
-                    (Callable<Void>) () -> {
-                        ExecutorService executor = Executors.newSingleThreadExecutor();
+            tasks.add(mainExecutor.submit(() -> {
+                ExecutorService executor = Executors.newSingleThreadExecutor();
 
-                        final List<ApiInfoForForward> apis = new CopyOnWriteArrayList<>();
-                        CallbackToApiMapper forwardFounder = new CallbackToApiMapper(callbackToAnalyze.handlerMethod, callbackToAnalyze.elementId, counter.incrementAndGet(), overallCallbacks, this.maxDepthMethodLevel, this.limitByPackageName, apis, false);
-                        forwardFounder.setSourcesAndSinks(this.sourcesSinksSignatures);
-                        Future<Void> futureTask =  executor.submit(forwardFounder);
+                final List<ApiInfoForForward> apis = new CopyOnWriteArrayList<>();
+                CallbackToApiMapper forwardFounder = new CallbackToApiMapper(
+                        callbackToAnalyze.handlerMethod, callbackToAnalyze.elementId, counter.incrementAndGet(),
+                        overallCallbacks, this.maxDepthMethodLevel, this.limitByPackageName, apis, false);
+                forwardFounder.setSourcesAndSinks(this.sourcesSinksSignatures);
+                Future<Void> futureTask =  executor.submit(forwardFounder);
+                try {
+                    futureTask.get(this.rechabilityTimeoutValue, this.rechabilityTimeoutUnit);
+                } catch (TimeoutException e) {
+                    logger.info("Timeout");
+                    timeoutedCallbacks.incrementAndGet();
+                    futureTask.cancel(true);
+                } catch (Exception e) {
+                    Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
+                    e.printStackTrace();
+                    futureTask.cancel(true);
+                }
+                finally {
+                    if (forwardFounder.getNewSootActivityClass() != null) {
+                        callbackToAnalyze.targetSootClass = forwardFounder.getNewSootActivityClass();
+                    }
+                    callbackToApis.put(callbackToAnalyze, apis);
+                    AppController.getInstance().updateUiElement(callbackToAnalyze.globalId, callbackToAnalyze);
+                }
+                executor.shutdownNow();
+                try {
+                    executor.awaitTermination(30, TimeUnit.SECONDS);
+                } catch (InterruptedException e) {
+                    logger.error("Executor did not terminate correctly");
+                }
+                finally {
+                    while (!executor.isTerminated()) {
                         try {
-                            futureTask.get(this.rechabilityTimeoutValue, this.rechabilityTimeoutUnit);
-                        } catch (TimeoutException e) {
-                            logger.info("Timeout");
-                            timeoutedCallbacks.incrementAndGet();
-                            futureTask.cancel(true);
-                        } catch (Exception e) {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
                             Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
                             e.printStackTrace();
-                            futureTask.cancel(true);
                         }
-                        finally {
-                            callbackToApis.put(callbackToAnalyze, apis);
-                        }
-
-
-                        executor.shutdownNow();
-                        try {
-                            executor.awaitTermination(30, TimeUnit.SECONDS);
-                        } catch (InterruptedException e) {
-                            logger.error("Executor did not terminate correctly");
-                        }
-                        finally {
-                            while (!executor.isTerminated()) {
-                                try {
-                                    Thread.sleep(1000);
-                                } catch (InterruptedException e) {
-                                    Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
-                                    e.printStackTrace();
-                                }
-                                logger.info("Waiting for finish");
-                            }
-                        }
-                        return null;
-                    }));
+                        logger.info("Waiting for finish");
+                    }
+                }
+                return null;
+            }));
         });
 
         for(Future<Void> task : tasks){
             try {
                 task.get();
-            } catch (InterruptedException e) {
-                Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
-                e.printStackTrace();
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
                 e.printStackTrace();
             }
         }
-
         mainExecutor.shutdown();
-
         try {
             mainExecutor.awaitTermination(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.error("Executor did not terminate correctly");
         }
-
-
         Helper.saveToStatisticalFile(String.format("Used timeout %s %s", this.rechabilityTimeoutValue, this.rechabilityTimeoutUnit));
         Helper.saveToStatisticalFile(String.format("Timeouted callbacks: %s", timeoutedCallbacks));
-
+        processedUiElement = localUiElements;
         return callbackToApis;
-
-
     }
 
+
+    /**
+     * Gets the list of UI elements
+     * @return
+     */
+    public List<UiElement> getUiElements() {
+        return processedUiElement;
+    }
 }

@@ -579,9 +579,9 @@ public class StmtSwitchToFindListener extends MyStmtSwitch {
 		Map<String, Set<String>> listenerMap = new HashMap<String, Set<String>>();
 		
 		String curpath = System.getProperty("user.dir");
+
 		File fparent = new File (curpath);
-		String parentPath = fparent.getAbsolutePath();
-		File listenerListFile = new File(parentPath + File.separator + "res" + File.separator + "listenerListWithOnMethods.txt");
+		File listenerListFile = new File(fparent.getAbsolutePath() + File.separator + "backstage" + File.separator + "res" + File.separator + "listenerListWithOnMethods.txt");
 		
 
 		FileReader fReader = null;

@@ -1,12 +1,11 @@
 package android.goal.explorer.model.component;
 
-import android.goal.explorer.model.App;
 import android.goal.explorer.model.entity.IntentFilter;
+import com.thoughtworks.xstream.annotations.XStreamOmitField;
 import soot.MethodOrMethodContext;
 import soot.SootClass;
 import soot.jimple.infoflow.android.axml.AXmlNode;
 import soot.jimple.infoflow.android.callbacks.CallbackDefinition;
-import soot.jimple.infoflow.android.callbacks.ComponentReachableMethods;
 
 import java.util.*;
 
@@ -17,10 +16,14 @@ public class AbstractComponent {
     private String shortName;
     private SootClass mainClass;
     private Set<SootClass> addedClasses;
+
+    // Callback methods
+    @XStreamOmitField()
     private Set<CallbackDefinition> callbacks;
 
+    // Lifecycle methods
+    @XStreamOmitField()
     private LinkedList<MethodOrMethodContext> lifecycleMethods;
-    private LinkedHashMap<MethodOrMethodContext, ComponentReachableMethods> lifecycleReachableMethods;
 
     public AbstractComponent(String name) {
         this.name = name;
@@ -32,7 +35,6 @@ public class AbstractComponent {
         this.addedClasses = new HashSet<>();
         this.callbacks = new HashSet<>();
         this.lifecycleMethods = new LinkedList<>();
-        this.lifecycleReachableMethods = new LinkedHashMap<>();
     }
 
     public AbstractComponent(AXmlNode node, SootClass sc, String packageName) {
@@ -42,7 +44,6 @@ public class AbstractComponent {
         addedClasses = new HashSet<>();
         callbacks = new HashSet<>();
         lifecycleMethods = new LinkedList<>();
-        lifecycleReachableMethods = new LinkedHashMap<>();
     }
 
     public AbstractComponent(String name, SootClass sc) {
@@ -52,7 +53,6 @@ public class AbstractComponent {
         addedClasses = new HashSet<>();
         callbacks = new HashSet<>();
         lifecycleMethods = new LinkedList<>();
-        lifecycleReachableMethods = new LinkedHashMap<>();
     }
 
     /**
@@ -157,7 +157,7 @@ public class AbstractComponent {
     }
 
     /**
-     * Gets the lifecycle methods of this activity
+     * Gets all lifecycle methods of this component
      * @return The lifecycle methods
      */
     public LinkedList<MethodOrMethodContext> getLifecycleMethods() {
@@ -165,7 +165,7 @@ public class AbstractComponent {
     }
 
     /**
-     * Adds the lifecycle methods to this activity
+     * Adds all lifecycle methods to this component
      * @param lifecycleMethods The lifecycle methods to be set
      */
     public void addLifecycleMethods(LinkedList<MethodOrMethodContext> lifecycleMethods) {
@@ -181,37 +181,11 @@ public class AbstractComponent {
     }
 
     /**
-     * Adds reachable methods
-     * @param method The lifecycle method
-     * @param rm The reachable methods
-     */
-    public void addLifecycleReachableMethods(MethodOrMethodContext method, ComponentReachableMethods rm) {
-        lifecycleReachableMethods.put(method, rm);
-    }
-
-    /**
-     * Gets the reachable methods from lifecycle method
-     * @param method The lifecycle method
-     * @return The reachable methods
-     */
-    public ComponentReachableMethods getLifecycleReachableMethodsFrom(MethodOrMethodContext method) {
-        return lifecycleReachableMethods.get(method);
-    }
-
-    /**
-     * Gets the reachable methods map
-     * @return The reachable methods mapped to lifecycle methods
-     */
-    public LinkedHashMap<MethodOrMethodContext, ComponentReachableMethods> getLifecycleReachableMethodsMap() {
-        return lifecycleReachableMethods;
-    }
-
-    /**
      * Gets the callback definitions in the current component
      * @return The callback definitions
      */
     public Set<CallbackDefinition> getCallbacks() {
-        if (callbacks!=null & !callbacks.isEmpty()){
+        if (callbacks!=null && !callbacks.isEmpty()){
             return callbacks;
         } else {
             return Collections.emptySet();

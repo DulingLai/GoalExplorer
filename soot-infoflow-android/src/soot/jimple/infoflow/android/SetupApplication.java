@@ -112,7 +112,7 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	protected MultiMap<SootClass, CallbackDefinition> callbackMethods = new HashMultiMap<>();
 	private MultiMap<SootClass, SootClass> fragmentClasses = new HashMultiMap<>();
 
-	protected InfoflowAndroidConfiguration config = new InfoflowAndroidConfiguration();
+	protected InfoflowAndroidConfiguration config;
 
 	protected Set<SootClass> entrypoints = null;
 	protected Set<String> callbackClasses = null;
@@ -1506,14 +1506,12 @@ public class SetupApplication implements ITaintWrapperDataFlowAnalysis {
 	 */
 	private void serializeResults(InfoflowResults results, IInfoflowCFG cfg) {
 		String resultsFile = config.getAnalysisFileConfig().getOutputFile();
-		if (resultsFile != null && !resultsFile.isEmpty()) {
+		File file = new File(resultsFile);
+		if (resultsFile != null && !resultsFile.isEmpty() && file.isFile()) {
 			InfoflowResultsSerializer serializer = new InfoflowResultsSerializer(cfg, config);
 			try {
 				serializer.serialize(results, resultsFile);
-			} catch (FileNotFoundException ex) {
-				System.err.println("Could not write data flow results to file: " + ex.getMessage());
-				ex.printStackTrace();
-			} catch (XMLStreamException ex) {
+			} catch (FileNotFoundException | XMLStreamException ex) {
 				System.err.println("Could not write data flow results to file: " + ex.getMessage());
 				ex.printStackTrace();
 			}

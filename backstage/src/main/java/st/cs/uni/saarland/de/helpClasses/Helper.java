@@ -3,7 +3,7 @@ package st.cs.uni.saarland.de.helpClasses;
 import org.xmlpull.v1.XmlPullParserException;
 import soot.*;
 import soot.jimple.infoflow.android.axml.AXmlNode;
-import soot.jimple.infoflow.android.manifest.ProcessManifest;
+import soot.jimple.infoflow.android.manifest.Manifest;
 import st.cs.uni.saarland.de.entities.FieldInfo;
 
 import java.io.*;
@@ -18,6 +18,7 @@ public class Helper {
 	private static String logsDir;
 	private static String resultsDir;
 	private static String packageName;
+	private static String apkPath;
 	private static int LOC;
 	public static Map<String, AtomicInteger> timeoutedPhasesInUIAnalysis = new ConcurrentHashMap<>();
 
@@ -64,9 +65,9 @@ public class Helper {
 	}
 
 	public static void initializeManifestInfo(String apkPath) {
-		ProcessManifest processMan = null;
+		Manifest processMan = null;
 		try {
-			processMan = new ProcessManifest(apkPath);
+			processMan = new Manifest(apkPath);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (XmlPullParserException e) {
@@ -80,7 +81,9 @@ public class Helper {
 		else {
 			packageName = splittedPackageName[0] + "." + splittedPackageName[1];
 		}
-		activitiesFromManifestFile.addAll(getActivitiesFromAxml(processMan.getActivities(), processMan.getPackageName()));
+		List<AXmlNode> xml = processMan.getActivities();
+		String realPackageName = processMan.getPackageName();
+		activitiesFromManifestFile.addAll(getActivitiesFromAxml(xml, realPackageName));
 	}
 
 	private static Set<String> getActivitiesFromAxml(List<AXmlNode> xml, String realPackageName){
@@ -98,6 +101,10 @@ public class Helper {
 		return activites;
 	}
 
+	public static void setPackageName(String name){
+		packageName = name;
+	}
+
 	public static String getPackageName(){
 		return packageName;
 	}
@@ -113,6 +120,10 @@ public class Helper {
 	public static void setResultsDir(String dir){
 		resultsDir = dir;
 	}
+
+	public static void setApkPath(String path) { apkPath = path; }
+
+	public static String getApkPath() {return apkPath;}
 
 	public static String getResultsDir(){
 		return resultsDir;
@@ -164,8 +175,6 @@ public class Helper {
 		// get the name of the apk name
 		File apkPathFile = new File(apkPath);
 		apkName = apkPathFile.getName();
-		//String[] splittedApkName = apkPath.split("\\\\");
-		//apkName = splittedApkName[splittedApkName.length - 1];
 	}
 
 	public static String getApkName(){
@@ -240,7 +249,11 @@ public class Helper {
 		excludedClasses.add("com.google.common.");
 		excludedClasses.add("sun.");
 		Set<String> sourcesAndSinks = new HashSet<>();
-		try(BufferedReader br = new BufferedReader(new FileReader(String.format("res%ssusi_apis.txt", File.separator)))) {
+
+		String parentPath = new File(System.getProperty("user.dir")).getAbsolutePath();
+		File susi_api_file = new File(parentPath + File.separator + "backstage" + File.separator + "res" + File.separator + "susi_apis.txt");
+
+		try(BufferedReader br = new BufferedReader(new FileReader(susi_api_file))) {
 			for(String line; (line = br.readLine()) != null; ) {
 				if(line.trim().length() > 0){
 					String trimmedLine = line.trim();
@@ -261,16 +274,16 @@ public class Helper {
 	}
 
 	public static void loadBundlesAndParsable(){
-		try(BufferedReader br = new BufferedReader(new FileReader(String.format("res%sbundlesAndParsable.txt", File.separator)))) {
+		File fparent = new File (System.getProperty("user.dir"));
+		File bundlesAndParsable_file = new File(fparent.getAbsolutePath() + File.separator + "backstage" +
+				File.separator + "res" + File.separator + "bundlesAndParsable.txt");
+		try(BufferedReader br = new BufferedReader(new FileReader(bundlesAndParsable_file))) {
 			for(String line; (line = br.readLine()) != null; ) {
 				if(line.trim().length() > 0){
 					String[] splittedLine = line.split(";");
 					bundlesAndParsable.put(splittedLine[0], splittedLine[1]);
 				}
 			}
-		} catch (FileNotFoundException e) {
-			saveToStatisticalFile(exceptionStacktraceToString(e));
-			e.printStackTrace();
 		} catch (IOException e) {
 			saveToStatisticalFile(exceptionStacktraceToString(e));
 			e.printStackTrace();
@@ -278,7 +291,10 @@ public class Helper {
 	}
 
 	public static void loadNotAnalyzedLibs(){
-		try(BufferedReader br = new BufferedReader(new FileReader(String.format("res%sandroidAndAdLibs.txt", File.separator)))) {
+		File fparent = new File (System.getProperty("user.dir"));
+		File android_lib_file = new File(fparent.getAbsolutePath() + File.separator + "backstage" +
+				File.separator + "res" + File.separator + "androidAndAdLibs.txt");
+		try(BufferedReader br = new BufferedReader(new FileReader(android_lib_file))) {
 			for(String line; (line = br.readLine()) != null; ) {
 				if(line.trim().length() > 0){
 					excludedPrefixes.add(line.trim());

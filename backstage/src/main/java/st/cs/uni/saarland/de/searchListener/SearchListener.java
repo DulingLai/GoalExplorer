@@ -30,11 +30,7 @@ public class SearchListener {
 	
 	
 	public void runSearchListener(Set<ListenerInfo> qs){
-		
 		logger.info("<SearchListener>");
-		
-		
-		
 		// search for listeners for every element
 		// first search for set*Listener methods in the apps code
 
@@ -47,7 +43,6 @@ public class SearchListener {
 		logger.info("<\\Search Classes of XML-onCLick methods>");
 
 		logger.info("<\\SearchOnClick>");
-		
 	}
 
 	// extract the listeners from the produced results and add them to the datastructure

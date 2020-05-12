@@ -49,6 +49,6 @@ public class SootUtils {
                 }
             }
         }
-        throw new RuntimeException(String.format("[NodeTransformer] Cannot find method %s -> %s and its superclasses do not override this method", methodSig, sc.getName())) ;
+        throw new RuntimeException(String.format("Cannot find method %s -> %s and its superclasses do not override this method", methodSig, sc.getName())) ;
     }
 }

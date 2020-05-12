@@ -1,9 +1,6 @@
 package android.goal.explorer.analysis;
 
-import soot.Local;
-import soot.Scene;
-import soot.Type;
-import soot.Value;
+import soot.*;
 import soot.jimple.spark.geom.dataMgr.Obj_full_extractor;
 import soot.jimple.spark.geom.dataMgr.PtSensVisitor;
 import soot.jimple.spark.geom.dataRep.IntervalContextVar;
@@ -12,14 +9,12 @@ import soot.jimple.spark.geom.geomPA.GeomQueries;
 import soot.jimple.spark.pag.AllocNode;
 import soot.jimple.toolkits.callgraph.Edge;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class TypeAnalyzer {
     private static TypeAnalyzer instance;
-
-    private GeomPointsTo geomPTA = (GeomPointsTo) Scene.v().getPointsToAnalysis();
-    private GeomQueries geomQueries = new GeomQueries(geomPTA);
 
     public static synchronized TypeAnalyzer v() {
         if (instance == null)
@@ -33,7 +28,8 @@ public class TypeAnalyzer {
      * @return The set of possible types
      */
     public synchronized Set<Type> getPointToPossibleTypes(Value arg) {
-        return geomPTA.reachingObjects((Local)arg).possibleTypes();
+        PointsToAnalysis PTA = Scene.v().getPointsToAnalysis();
+        return PTA.reachingObjects((Local)arg).possibleTypes();
     }
 
     /**
@@ -43,17 +39,7 @@ public class TypeAnalyzer {
      * @return The set of possible types
      */
     public synchronized Set<Type> getContextPointToPossibleTypes(Value arg, Edge x) {
-        Set<Type> geomContextTypes = new HashSet<>();
-        PtSensVisitor<?> visitor = new Obj_full_extractor();
-        if (geomQueries.contextsGoBy(x, (Local) arg, visitor)) {
-            for (Object icv_obj : visitor.outList) {
-                IntervalContextVar icv = (IntervalContextVar) icv_obj;
-                AllocNode obj = (AllocNode) icv.var;
-                Type type = obj.getType();
-                geomContextTypes.add(type);
-            }
-        }
-        return geomContextTypes;
+        return getContextPointToPossibleTypes(arg, new Edge[]{x});
     }
 
     /**
@@ -63,6 +49,8 @@ public class TypeAnalyzer {
      * @return The set of possible types
      */
     public synchronized Set<Type> getContextPointToPossibleTypes(Value arg, Edge[] x) {
+        GeomPointsTo geomPTA = (GeomPointsTo) Scene.v().getPointsToAnalysis();
+        GeomQueries geomQueries = new GeomQueries(geomPTA);
         Set<Type> geomContextTypes = new HashSet<>();
         PtSensVisitor<?> visitor = new Obj_full_extractor();
         if (geomQueries.kCFA(x, (Local)arg, visitor)) {

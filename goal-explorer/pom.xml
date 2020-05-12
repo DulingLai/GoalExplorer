@@ -47,7 +47,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>android.goal.explorer.tmp.AnalyzerMain</mainClass>
+                            <mainClass>android.goal.explorer.MainClass</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -55,6 +55,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.1.1</version>
                 <configuration>
                     <finalName>GoalExplorer</finalName>
                     <descriptorRefs>
@@ -63,7 +64,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>android.goal.explorer.tmp.AnalyzerMain</mainClass>
+                            <mainClass>android.goal.explorer.MainClass</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
@@ -72,7 +73,7 @@
                         <id>simple-command</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>attached</goal>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -92,31 +93,31 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.5</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.slf4j</groupId>-->
-            <!--<artifactId>slf4j-simple</artifactId>-->
-            <!--<version>1.7.5</version>-->
-            <!--<optional>true</optional>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-            <!--<groupId>log4j</groupId>-->
-            <!--<artifactId>log4j</artifactId>-->
-            <!--<version>1.2.15</version>-->
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>com.sun.jmx</groupId>-->
-                    <!--<artifactId>jmxri</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                    <!--<groupId>com.sun.jdmk</groupId>-->
-                    <!--<artifactId>jmxtools</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                    <!--<groupId>javax.jms</groupId>-->
-                    <!--<artifactId>jms</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.5</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.15</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sun.jmx</groupId>
+                    <artifactId>jmxri</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.sun.jdmk</groupId>
+                    <artifactId>jmxtools</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>javax.jms</groupId>
+                    <artifactId>jms</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
         <dependency>
             <groupId>de.tud.sse</groupId>
             <artifactId>soot-infoflow-android</artifactId>

@@ -1,5 +1,6 @@
 package android.goal.explorer.model.component;
 
+import android.goal.explorer.data.android.constants.MethodConstants;
 import android.goal.explorer.model.entity.IntentFilter;
 import android.goal.explorer.model.entity.Listener;
 import android.goal.explorer.model.widget.AbstractWidget;
@@ -7,25 +8,26 @@ import android.goal.explorer.utils.AxmlUtils;
 import soot.MethodOrMethodContext;
 import soot.SootClass;
 import soot.jimple.infoflow.android.axml.AXmlNode;
-import soot.jimple.infoflow.android.callbacks.ComponentReachableMethods;
+import st.cs.uni.saarland.de.entities.Dialog;
+import st.cs.uni.saarland.de.entities.Menu;
+import st.cs.uni.saarland.de.entities.XMLLayoutFile;
+import st.cs.uni.saarland.de.reachabilityAnalysis.UiElement;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
+
+import static android.goal.explorer.utils.SootUtils.findAndAddMethod;
 
 public class Activity extends AbstractComponent {
 
     private Set<MethodOrMethodContext> menuOnCreateMethods;
     private Set<MethodOrMethodContext> menuCallbackMethods;
 
-    // reachable methods
-    private LinkedHashMap<MethodOrMethodContext, ComponentReachableMethods> menuReachableMethods;
-    private LinkedHashMap<MethodOrMethodContext, ComponentReachableMethods> callbackReachableMethods;
-
     private Set<IntentFilter> intentFilters;
     private Set<Listener> listeners;
     private Set<Fragment> fragments;
     private Set<AbstractWidget> widgets;
+
+    private Set<XMLLayoutFile> layoutFiles;
 
     private Integer resourceId;
     private Integer mainXmlLayoutResId;
@@ -37,8 +39,11 @@ public class Activity extends AbstractComponent {
     private Set<String> childCompStrings;
     private Set<AbstractComponent> childComps;
 
-    private boolean isExported = false;
-    private boolean containLogin = false;
+    // For BACKSTAGE
+    private Map<Integer, XMLLayoutFile> layouts;
+    private Map<Integer, UiElement> uiElementsMap;
+    private Menu menu;
+    private Set<Dialog> dialogs;
 
     public Activity(AXmlNode node, SootClass sc, String packageName) {
         super(node, sc, packageName);
@@ -47,7 +52,6 @@ public class Activity extends AbstractComponent {
                 AxmlUtils.processIntentFilter(node, IntentFilter.Type.Category));
 
         parentCompString = AxmlUtils.processNodeParent(node, packageName);
-        isExported = AxmlUtils.processNodeExported(node);
         resourceId = -1;
 
         menuOnCreateMethods = new HashSet<>();
@@ -58,6 +62,12 @@ public class Activity extends AbstractComponent {
         widgets = new HashSet<>();
         childCompStrings = new HashSet<>();
         childComps = new HashSet<>();
+
+        // For BACKSTAGE
+        layouts = new HashMap<>();
+        uiElementsMap = new HashMap<>();
+        layoutFiles = new HashSet<>();
+        dialogs = new HashSet<>();
     }
 
     /* ========================================
@@ -146,16 +156,6 @@ public class Activity extends AbstractComponent {
      */
     public void addMenuCallbackMethod(MethodOrMethodContext menuMethod) {
         this.menuCallbackMethods.add(menuMethod);
-    }
-
-    // TODO check if we still need this flag
-    public boolean isContainLogin() {
-        return containLogin;
-    }
-
-    // TODO check if we still need this flag
-    public void setContainLogin(boolean containLogin) {
-        this.containLogin = containLogin;
     }
 
     /**
@@ -332,20 +332,106 @@ public class Activity extends AbstractComponent {
         this.childComps.add(childComp);
     }
 
-    /**
-     * If the activity is exported in the manifest
-     * @return True if the activity is exported in the manifest
+    /*============================
+    for BACKSTAGE
      */
-    public boolean isExported() {
-        return isExported;
+    /**
+     * Gets the layouts associated with the activity
+     * @return The layouts
+     */
+    public Map<Integer, XMLLayoutFile> getLayouts() {
+        return layouts;
     }
 
     /**
-     * Sets if the activity is exported in the manifest
-     * @param  exported If the activity is exported in the manifest
+     * Sets the layouts associated with the activity
      */
-    public void setExported(boolean exported) {
-        isExported = exported;
+    public void setLayouts(Map<Integer, XMLLayoutFile> layouts) {
+        this.layouts.putAll(layouts);
+    }
+
+    public void addLayout(Integer resId, XMLLayoutFile layout) {
+        layouts.put(resId, layout);
+    }
+
+    public void getLayout(Integer resId) {
+        layouts.get(resId);
+    }
+
+
+    public Menu getMenu() {
+        return menu;
+    }
+
+    public void setMenu(Menu menu) {
+        this.menu = menu;
+    }
+
+    public Set<Dialog> getDialogs() {
+        return dialogs;
+    }
+
+    public void setDialogs(Set<Dialog> dialogs) {
+        this.dialogs = dialogs;
+    }
+
+    public void addDialog(Dialog dialog) {
+        this.dialogs.add(dialog);
+    }
+
+    /**
+     * Gets the lifecycle methods before the activity is running
+     * @return The lifecycle methods before the activity is running
+     */
+    public LinkedList<MethodOrMethodContext> getLifecycleMethodsPreRun() {
+        LinkedList<MethodOrMethodContext> lifecycleMethodsPreRun = new LinkedList<>();
+
+        List<String> lifecycleMethods = MethodConstants.Activity.getlifecycleMethodsPreRun();
+
+        // Collect the list of lifecycle methods pre-run (in order)
+        for (String lifecycleMethod : lifecycleMethods) {
+            MethodOrMethodContext method = findAndAddMethod(lifecycleMethod, this);
+            if (method != null) lifecycleMethodsPreRun.add(method);
+        }
+        return lifecycleMethodsPreRun;
+    }
+
+    /**
+     * Gets the lifecycle methods when the activity is paused
+     * @return The lifecycle methods when the activity is paused
+     */
+    public LinkedList<MethodOrMethodContext> getLifecycleMethodsOnPause() {
+        LinkedList<MethodOrMethodContext> lifecycleMethodsOnPause = new LinkedList<>();
+
+        List<String> lifecycleMethods = MethodConstants.Activity.getlifecycleMethodsOnPause();
+
+        // Collect the list of lifecycle methods pre-run (in order)
+        lifecycleMethods.iterator().forEachRemaining(x -> {
+            MethodOrMethodContext method = findAndAddMethod(x, this);
+            if (method!=null)
+                lifecycleMethodsOnPause.add(method);
+        });
+
+        return lifecycleMethodsOnPause;
+    }
+
+    /**
+     * Gets the lifecycle methods when the activity is stopped
+     * @return The lifecycle methods when the activity is stopped
+     */
+    public LinkedList<MethodOrMethodContext> getLifecycleMethodsOnStop() {
+        LinkedList<MethodOrMethodContext> lifecycleMethodsOnStop = new LinkedList<>();
+
+        List<String> lifecycleMethods = MethodConstants.Activity.getlifecycleMethodsOnStop();
+
+        // Collect the list of lifecycle methods pre-run (in order)
+        lifecycleMethods.iterator().forEachRemaining(x -> {
+            MethodOrMethodContext method = findAndAddMethod(x, this);
+            if (method!=null)
+                lifecycleMethodsOnStop.add(method);
+        });
+
+        return lifecycleMethodsOnStop;
     }
 
     @Override
@@ -370,5 +456,17 @@ public class Activity extends AbstractComponent {
         if (!resourceId.equals(other.resourceId))
             return false;
         return getName().equals(other.getName());
+    }
+
+    public Collection<UiElement> getUiElements() {
+        return uiElementsMap.values();
+    }
+
+    public UiElement getUiElement(Integer id) {
+        return uiElementsMap.getOrDefault(id, null);
+    }
+
+    public void addUiElement(Integer id, UiElement uiElement) {
+        uiElementsMap.put(id, uiElement);
     }
 }

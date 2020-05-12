@@ -79,4 +79,9 @@ public class IntentInfo {
         this.extras.add(extra);
     }
 
+    @Override
+    public String toString(){
+        return getClassName() + " : " + getAction() + " -> " + getData() + " ; " + getExtras();
+    }
+
 }

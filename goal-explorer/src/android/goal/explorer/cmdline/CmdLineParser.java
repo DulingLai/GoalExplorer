@@ -1,12 +1,18 @@
 package android.goal.explorer.cmdline;
 
 import android.goal.explorer.utils.FileUtil;
+import com.beust.jcommander.IDefaultProvider;
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 import org.apache.commons.cli.*;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.PropertyConfigurator;
 import org.pmw.tinylog.Configurator;
 import org.pmw.tinylog.Level;
 import org.pmw.tinylog.Logger;
+import st.cs.uni.saarland.de.helpClasses.Helper;
+import st.cs.uni.saarland.de.reachabilityAnalysis.RAHelper;
+import st.cs.uni.saarland.de.testApps.Settings;
 
 import java.io.File;
 import java.util.Properties;
@@ -25,6 +31,7 @@ public class CmdLineParser {
     private static final String OPTION_MAX_CALLBACK = "c";
     private static final String OPTION_MAX_TIMEOUT = "t";
     private static final String OPTION_NUM_THREAD = "n";
+    private static final String OPTION_CONTEXT_POINTTO = "cp";
 
     // Android
     private static final String OPTION_ANDROID_SDK_PATH = "s";
@@ -49,9 +56,10 @@ public class CmdLineParser {
         Option config = Option.builder(OPTION_CONFIG_FILE_PATH).required(false).longOpt("config").hasArg(true).desc("the configuration file (optional)").build();
         Option sdkPath = Option.builder(OPTION_ANDROID_SDK_PATH).required(false).longOpt("sdk").hasArg(true).desc("path to android sdk (default value can be set in config file)").build();
         Option apiLevel = Option.builder(OPTION_ANDROID_API_LEVEL).required(false).type(Number.class).longOpt("api").hasArg(true).desc("api level (default to 23)").build();
+        Option contextPointTo = new Option(OPTION_CONTEXT_POINTTO, "contextPt", false, "enable context-sensitive point-to analysis (default disabled)");
         Option iccModel = Option.builder(OPTION_ICC_MODEL).required(false).longOpt("model").hasArg(true).desc("icc model (default to match the package name").build();
         Option maxCallback = Option.builder(OPTION_MAX_CALLBACK).required(false).type(Number.class).hasArg(true).desc("the maximum number of callbacks modeled for each component (default to 100)").build();
-        Option timeOut = Option.builder(OPTION_MAX_TIMEOUT).required(false).hasArg(true).desc("maximum timeout analyzing each component in minutes (default: 5)").build();
+        Option timeOut = Option.builder(OPTION_MAX_TIMEOUT).required(false).hasArg(true).desc("maximum timeout analyzing each component in seconds (default: 120)").build();
         Option numThread = Option.builder(OPTION_NUM_THREAD).required(false).hasArg(true).desc("the number of threads used for multi-threading analysis. Adjust to the number of CPU cores for better performance (default: 16)").build();
         Option debug = new Option(OPTION_DEBUG, "debug", false, "debug mode (default disabled)");
         Option help = new Option(OPTION_HELP, "help", false, "print the help message");
@@ -59,7 +67,7 @@ public class CmdLineParser {
 
         // add the options
         options.addOption(input).addOption(output).addOption(config).addOption(sdkPath).addOption(apiLevel).addOption(iccModel);
-        options.addOption(timeOut).addOption(maxCallback).addOption(numThread);
+        options.addOption(timeOut).addOption(maxCallback).addOption(numThread).addOption(contextPointTo);
         options.addOption(debug).addOption(help).addOption(version);
     }
 
@@ -109,6 +117,11 @@ public class CmdLineParser {
         }
 
         // callback analysis setting
+        if (cmd.hasOption(OPTION_CONTEXT_POINTTO) || cmd.hasOption("contextPt"))
+            config.setPointToType(GlobalConfig.PointToType.CONTEXT);
+        else
+            config.setPointToType(GlobalConfig.PointToType.DEFAULT);
+
         if (cmd.hasOption(OPTION_MAX_CALLBACK)) {
             Integer maxCallback = parseIntOption(cmd, OPTION_MAX_CALLBACK);
             config.getFlowdroidConfig().getCallbackConfig().setMaxCallbacksPerComponent(maxCallback);
@@ -247,5 +260,56 @@ public class CmdLineParser {
             return null;
         else
             return Integer.parseInt(str);
+    }
+
+    /**
+     * Process arguments for
+     */
+    public static Settings parseArgForBackstage(GlobalConfig config) {
+        final IDefaultProvider DEFAULT_PROVIDER = optionName -> ("-rTimeoutUnit".equals(optionName) ||
+                "-tTimeoutUnit".equals(optionName)) ? "MINUTES" : null;
+
+        String[] args = new String[20];
+        args[0] = "-apk";
+        args[1] = config.getFlowdroidConfig().getAnalysisFileConfig().getTargetAPKFile();
+        args[2] = "-androidJar";
+        args[3] = config.getFlowdroidConfig().getAnalysisFileConfig().getAndroidPlatformDir();
+        args[4] = "-apkToolOutput";
+        args[5] = config.getFlowdroidConfig().getAnalysisFileConfig().getOutputFile();
+        args[6] = "-rAnalysis";
+        args[7] = "-uiTimeoutValue";
+        args[8] = "120";
+        args[9] = "-uiTimeoutUnit";
+        args[10] = "SECONDS";
+        args[11] = "-rTimeoutValue";
+        args[12] = "120";
+        args[13] = "-rTimeoutUnit";
+        args[14] = "SECONDS";
+        args[15] = "-maxDepthMethodLevel";
+        args[16] = "15";
+        args[17] = "-numThreads";
+        args[18] = "24";
+        args[19] = "-rLimitByPackageName";
+
+        Settings settings = new Settings();
+        JCommander jc = new JCommander(settings);
+        jc.setDefaultProvider(DEFAULT_PROVIDER);
+
+        try {
+            jc.parse(args);
+            Helper.setApkName(settings.apkPath);
+            Helper.setApkPath(settings.apkPath);
+            Helper.setLogsDir(settings.logsDir);
+            Helper.setResultsDir(settings.resultsDir);
+            Helper.setLOC(settings.maxLocInMethod);
+            RAHelper.numThreads = settings.numThreads;
+            Helper.initializeManifestInfo(settings.apkPath);
+        } catch (ParameterException e) {
+            System.err.println(e.getMessage());
+            jc.usage();
+            System.exit(1);
+        }
+
+        return settings;
     }
 }

@@ -47,17 +47,24 @@ public class MethodConstants {
         private static final String[] lifecycleMethodsPreRun = {ACTIVITY_ONCREATE, ACTIVITY_ONPOSTCREATE,
                 ACTIVITY_ONSTART, ACTIVITY_ONRESTART, ACTIVITY_ONRESUME, ACTIVITY_ONRESTOREINSTANCESTATE,
                 ACTIVITY_ONPOSTRESUME, ACTIVITY_ONATTACHFRAGMENT};
-        private static final String[] lifecycleMethodsAfterRun = { ACTIVITY_ONPAUSE, ACTIVITY_ONSTOP,
+        private static final String[] lifecycleMethodsAfterRun = {ACTIVITY_ONPAUSE, ACTIVITY_ONSTOP,
                 ACTIVITY_ONDESTROY, ACTIVITY_ONCREATEDESCRIPTION, ACTIVITY_ONSAVEINSTANCESTATE};
+        private static final String[] lifecycleMethodsOnPause = {ACTIVITY_ONPAUSE, ACTIVITY_ONRESUME, ACTIVITY_ONPOSTRESUME};
+        private static final String[] lifecycleMethodsOnStop = {ACTIVITY_ONPAUSE, ACTIVITY_ONSTOP, ACTIVITY_ONRESTART,
+                ACTIVITY_ONRESUME, ACTIVITY_ONPOSTRESUME};
 
         private static final List<String> activityPreRunMethodList = Arrays.asList(lifecycleMethodsPreRun);
         private static final List<String> activityMethodList = Arrays.asList(
                 Stream.concat(Arrays.stream(lifecycleMethodsPreRun),
                         Arrays.stream(lifecycleMethodsAfterRun)).toArray(String[] :: new));
+        private static final List<String> activityOnPauseMethodList = Arrays.asList(lifecycleMethodsOnPause);
+        private static final List<String> activityOnStopMethodList = Arrays.asList(lifecycleMethodsOnStop);
 
         // Getters
         public static List<String> getLifecycleMethods() { return activityMethodList; }
         public static List<String> getlifecycleMethodsPreRun() {return activityPreRunMethodList;}
+        public static List<String> getlifecycleMethodsOnPause() {return activityOnPauseMethodList;}
+        public static List<String> getlifecycleMethodsOnStop() {return activityOnStopMethodList;}
     }
 
     public static class ActivityLifecycleCallback {

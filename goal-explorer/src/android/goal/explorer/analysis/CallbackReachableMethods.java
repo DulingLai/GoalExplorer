@@ -59,10 +59,15 @@ public class CallbackReachableMethods extends ComponentReachableMethods {
                 reachables.add(m);
 
                 // update the edge map
-                for (List<Edge> edgeList : new ArrayList<>(edgeMap.get(src))) {
-                    List<Edge> copy = new ArrayList<>(edgeList);
-                    copy.add(e);
-                    edgeMap.put(m, copy);
+                Set<List<Edge>> srcEdges = edgeMap.get(src);
+                if (srcEdges!=null && !srcEdges.isEmpty()) {
+                    for (List<Edge> edgeList : new ArrayList<>(edgeMap.get(src))) {
+                        List<Edge> copy = new ArrayList<>(edgeList);
+                        copy.add(e);
+                        edgeMap.put(m, copy);
+                    }
+                } else {
+                    edgeMap.put(m, Collections.singletonList(e));
                 }
             }
         }

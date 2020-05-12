@@ -1,6 +1,7 @@
 package st.cs.uni.saarland.de.reachabilityAnalysis;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import st.cs.uni.saarland.de.helpClasses.Helper;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -55,5 +56,14 @@ public class IntentInfo extends ApiInfoForForward {
 
     private Set<String> extras;
 
-
+    @Override
+    public String toString(){
+        if (api != null) {
+            return String.format("API: %s; DepthMethodLevel: %s; DepthComponentLevel: %s",
+                    Helper.getSignatureOfSootMethod(api), depthMethodLevel, depthComponentLevel);
+        } else {
+            return String.format("API: %s; DepthMethodLevel: %s; DepthComponentLevel: %s",
+                    "Null", depthMethodLevel, depthComponentLevel);
+        }
+    }
 }

@@ -16,7 +16,7 @@ public class SootHelper {
         sc.setSuperclass(Scene.v().getSootClass("java.lang.Object"));
 
         sc.setApplicationClass();
-        sc.setPhantom(false);
+//        sc.setPhantom(false);
         sc.setInScene(true);
 
         return sc;

@@ -55,7 +55,10 @@ public class START_ACTIVITY_CONSTANTS {
     }
 
     private static void loadStartActivitySignatures() {
-        try (BufferedReader br = new BufferedReader(new FileReader(String.format("res%sstartActivitySignatures.txt", File.separator)))) {
+        String parentPath = new File(System.getProperty("user.dir")).getAbsolutePath();
+        String filePath = parentPath + File.separator + "backstage" + File.separator +
+                "res" + File.separator + "startActivitySignatures.txt";
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             for (String line; (line = br.readLine()) != null; ) {
                 if (line.trim().length() > 0) {
                     if(line.trim().startsWith("#"))
@@ -63,9 +66,6 @@ public class START_ACTIVITY_CONSTANTS {
                     startActivityMethods.add(line.split(":")[1].trim().replace(">",""));
                 }
             }
-        } catch (FileNotFoundException e) {
-            Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
-            e.printStackTrace();
         } catch (IOException e) {
             Helper.saveToStatisticalFile(Helper.exceptionStacktraceToString(e));
             e.printStackTrace();

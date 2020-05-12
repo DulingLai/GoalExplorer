@@ -6,10 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Backstage" />
         <module name="goal-explorer" />
-        <module name="soot-infoflow" />
         <module name="soot-infoflow-android" />
+        <module name="soot-infoflow" />
+        <module name="Backstage" />
       </profile>
     </annotationProcessing>
   </component>

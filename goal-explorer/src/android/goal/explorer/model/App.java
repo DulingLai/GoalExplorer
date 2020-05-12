@@ -11,10 +11,10 @@ import soot.jimple.infoflow.android.SetupApplication;
 import soot.jimple.infoflow.android.axml.AXmlNode;
 import soot.jimple.infoflow.android.callbacks.CallbackDefinition;
 import soot.jimple.infoflow.android.entryPointCreators.AndroidEntryPointUtils;
+import soot.jimple.infoflow.android.manifest.Manifest;
 import soot.jimple.infoflow.android.manifest.ProcessManifest;
 import soot.util.MultiMap;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,6 +23,9 @@ public class App {
 
     // Instance of the class
 //    private static volatile App instance;
+
+    // Manifest
+    private ProcessManifest manifest;
 
     // Package name of the APK file
     private String packageName;
@@ -39,7 +42,7 @@ public class App {
     private Set<BroadcastReceiver> broadcastReceivers;
     private Set<ContentProvider> contentProviders;
 
-    // Fragment map
+    // Fragment class map to activity class
     private MultiMap<SootClass, SootClass> fragmentClasses;
 
     // Callbacks
@@ -56,16 +59,6 @@ public class App {
     public App(){
         reset();
     }
-
-//    public static App v() {
-//        if (instance == null) {
-//            synchronized (App.class) {
-//                if (instance == null)
-//                    instance = new App();
-//            }
-//        }
-//        return instance;
-//    }
 
     /**
      * Resets all components of the app
@@ -87,6 +80,8 @@ public class App {
      */
     public void initializeAppModel(SetupApplication app) {
         this.packageName = app.getPackageName();
+
+        this.manifest = app.getManifest();
 
         // Callbacks and fragment classes collected by FlowDroid
         this.callbackMethods = app.getCallbackMethods();
@@ -203,6 +198,46 @@ public class App {
      */
     public String getPackageName() {
         return packageName;
+    }
+
+    /**
+     * Gets the application class of the app
+     * @return The application class of the app
+     */
+    public Application getApplication() {
+        return application;
+    }
+
+    /**
+     * Gets the manifest of the app
+     * @return The manifest of the app
+     */
+    public ProcessManifest getManifest() {
+        return manifest;
+    }
+
+    /**
+     * Gets the number of activities in the app manifest
+     * @return The number of activities
+     */
+    public Integer getNumActInManifest() {
+        return manifest.getActivities().size();
+    }
+
+    /**
+     * Gets the number of services in the app manifest
+     * @return The number of services
+     */
+    public Integer getNumServiceInManifest() {
+        return manifest.getServices().size();
+    }
+
+    /**
+     * Gets the number of broadcast receivers in the app manifest
+     * @return The number of broadcast receivers
+     */
+    public Integer getNumReceiverInManifest() {
+        return manifest.getReceivers().size();
     }
 
     /**
@@ -395,17 +430,47 @@ public class App {
     }
 
     /**
-     * Gets a fragment by resource id
-     * @param resId The resource id of the fragment
-     * @return The fragment of given name
+     * Find all fragments with given resource ID
+     * @param resId The resource ID to search
+     * @return a set of fragment contains the given resource ID
      */
-    public synchronized Fragment getFragmentByResId(Integer resId) {
+    public synchronized Set<Fragment> getFragmentsByResId(Integer resId) {
+        Set<Fragment> fragments = new HashSet<>();
+        for (Fragment fragment : this.fragments) {
+            for (Integer allResId : fragment.getResourceIds()) {
+                if (resId.equals(allResId)) {
+                    fragments.add(fragment);
+                }
+            }
+        }
+        return fragments;
+    }
+
+    /**
+     * Gets a fragment by Soot class
+     * @param sc The Soot class of the fragment
+     * @return The fragment of given Soot class
+     */
+    public synchronized Fragment getFragmentByClass(SootClass sc) {
         for (Fragment fragment : fragments) {
-            if (resId.equals(fragment.getResourceId()))
+            if (sc.getName().equals(fragment.getMainClass().getName()))
                 return fragment;
         }
         return null;
     }
+
+    /**
+     * Gets a fragment by resource id
+     * @param resId The resource id of the fragment
+     * @return The fragment of given name
+     */
+//    public synchronized Fragment getFragmentByResId(Integer resId) {
+//        for (Fragment fragment : fragments) {
+//            if (resId.equals(fragment.getResourceId()))
+//                return fragment;
+//        }
+//        return null;
+//    }
 
     /**
      * Adds a fragment to the model
@@ -455,8 +520,8 @@ public class App {
      * @param sc The soot class of this fragment
      * @param resId The resource id of the fragment to be added
      */
-    public synchronized void createFragment(SootClass sc, Integer resId) {
-        Fragment fragment = getFragmentByResId(resId);
+    public synchronized void createFragment(SootClass sc, Set<Integer> resId) {
+        Fragment fragment = getFragmentByName(sc.getName());
         if (fragment==null)
             addFragment(new Fragment(sc, resId));
     }
@@ -465,7 +530,7 @@ public class App {
      * Gets all callbacks in form of a MultiMap
      * @return All callbacks mapped to SootClass where the callbacks are registered
      */
-    public MultiMap<SootClass, CallbackDefinition> getCallbackMethods() {
+    public synchronized MultiMap<SootClass, CallbackDefinition> getCallbackMethods() {
         return callbackMethods;
     }
 
@@ -474,7 +539,7 @@ public class App {
      * @param sc The SootClass to look for callbacks
      * @return The callbacks in the given SootClass
      */
-    public Set<CallbackDefinition> getCallbacksInSootClass(SootClass sc) {
+    public synchronized Set<CallbackDefinition> getCallbacksInSootClass(SootClass sc) {
         return callbackMethods.get(sc);
     }
 
@@ -482,7 +547,7 @@ public class App {
      * Gets the layout file manager
      * @return The layout manager
      */
-    public LayoutManager getLayoutManager() {
+    public synchronized LayoutManager getLayoutManager() {
         return layoutManager;
     }
 
@@ -490,8 +555,24 @@ public class App {
      * Sets the layout file manager
      * @param lfp THe layout file manager
      */
-    public void setLayoutManager(LayoutManager lfp) {
+    public synchronized void setLayoutManager(LayoutManager lfp) {
         this.layoutManager = lfp;
+    }
+
+    public Set<Menu> getMenus() {
+        return menus;
+    }
+
+    public void addMenu(Menu menu) {
+        this.menus.add(menu);
+    }
+
+    public Set<Dialog> getDialogs() {
+        return dialogs;
+    }
+
+    public void addDialog(Dialog dialogs) {
+        this.dialogs.add(dialogs);
     }
 
 //    /**

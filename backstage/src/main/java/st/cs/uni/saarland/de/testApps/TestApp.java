@@ -103,6 +103,7 @@ public class TestApp {
             List<UiElement> distinctUiElements = uiElementObjectsForReachabilityAnalysis.stream().distinct().collect(Collectors.toList());
             runReachabilityAnalysis(distinctUiElements, appResults.getActivityNames(), settings);
         }
+        Application app = AppController.getInstance().getApp();
         saveStatistics();
         Helper.saveToStatisticalFile("App Analysis has run for " + (System.nanoTime() - startApp) / 1E9 + " seconds");
     }
@@ -115,7 +116,7 @@ public class TestApp {
         return new AppController((Application) xstreamI.fromXML(uiFile));
     }
 
-    private static AppController performUiAnalysis(Settings settings) {
+    public static AppController performUiAnalysis(Settings settings) {
         boolean resultToken = new Main_UI_Analysis(settings.tTimeoutUnit, settings.tTimeoutValue, settings.numThreads,
                 settings.processMenus, settings.maxDepthMethodLevel ,settings.isTest).runAnalysisForOneApp(new File(settings.apkToolOutputPath), settings.process_images);
         if(!resultToken){

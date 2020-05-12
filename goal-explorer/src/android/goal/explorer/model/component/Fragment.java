@@ -2,40 +2,52 @@ package android.goal.explorer.model.component;
 
 import android.goal.explorer.model.entity.Listener;
 import android.goal.explorer.model.widget.AbstractWidget;
+import com.thoughtworks.xstream.annotations.XStreamOmitField;
 import soot.MethodOrMethodContext;
 import soot.SootClass;
-import soot.jimple.infoflow.android.callbacks.ComponentReachableMethods;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Fragment extends AbstractComponent {
 
+    @XStreamOmitField()
     private Set<Listener> listeners;
+    @XStreamOmitField()
     private Set<AbstractWidget> widgets;
 
-    private Integer resourceId;
+    @XStreamOmitField()
+    private Set<Integer> resourceIds;
+    @XStreamOmitField()
     private Set<Activity> parentActivities;
 
+    @XStreamOmitField()
     private Set<MethodOrMethodContext> menuRegistrationMethods;
+    @XStreamOmitField()
     private Set<MethodOrMethodContext> menuCallbackMethods;
-    // reachable methods
-    private LinkedHashMap<MethodOrMethodContext, ComponentReachableMethods> lifecycleReachableMethods;
 
     public Fragment(SootClass sootClass, Activity parentActivity) {
         super(sootClass.getName(), sootClass);
         this.parentActivities = new HashSet<>(Collections.singletonList(parentActivity));
         this.menuRegistrationMethods = new HashSet<>();
         this.menuCallbackMethods = new HashSet<>();
-        this.lifecycleReachableMethods = new LinkedHashMap<>();
+        this.resourceIds = new HashSet<>();
     }
 
     public Fragment(SootClass sootClass) {
         super(sootClass.getName(), sootClass);
+        this.menuRegistrationMethods = new HashSet<>();
+        this.menuCallbackMethods = new HashSet<>();
+        this.resourceIds = new HashSet<>();
     }
 
-    public Fragment(SootClass sootClass, Integer resourceId) {
+    public Fragment(SootClass sootClass, Set<Integer> resourceIds) {
         super(sootClass.getName(), sootClass);
-        this.resourceId = resourceId;
+        this.resourceIds = resourceIds;
+        this.menuRegistrationMethods = new HashSet<>();
+        this.menuCallbackMethods = new HashSet<>();
+        this.resourceIds = new HashSet<>();
     }
 
     /*
@@ -50,8 +62,8 @@ public class Fragment extends AbstractComponent {
         return widgets;
     }
 
-    public Integer getResourceId() {
-        return resourceId;
+    public Set<Integer> getResourceIds() {
+        return resourceIds;
     }
 
     public Set<Activity> getParentActivities() {
@@ -76,10 +88,10 @@ public class Fragment extends AbstractComponent {
 
     /**
      * Sets the resource id of the fragment
-     * @param resourceId The resource id of the fragment
+     * @param resourceIds The resource ids of the fragment
      */
-    public void setResourceId(Integer resourceId) {
-        this.resourceId = resourceId;
+    public void setResourceIds(Set<Integer> resourceIds) {
+        this.resourceIds = resourceIds;
     }
 
     /**
@@ -138,33 +150,6 @@ public class Fragment extends AbstractComponent {
         this.menuCallbackMethods.add(menuMethod);
     }
 
-    /**
-     * Adds reachable methods
-     * @param method The lifecycle method
-     * @param rm The reachable methods
-     */
-    public void addLifecycleReachableMethods(MethodOrMethodContext method, ComponentReachableMethods rm) {
-        lifecycleReachableMethods.put(method, rm);
-    }
-
-    /**
-     * Gets the reachable methods from lifecycle method
-     * @param method The lifecycle method
-     * @return The reachable methods
-     */
-    public ComponentReachableMethods getLifecycleReachableMethodsFrom(MethodOrMethodContext method) {
-        return lifecycleReachableMethods.get(method);
-    }
-
-    /**
-     * Gets the reachable methods map
-     * @return The reachable methods mapped to lifecycle methods
-     */
-    public LinkedHashMap<MethodOrMethodContext, ComponentReachableMethods> getLifecycleReachableMethodsMap() {
-        return lifecycleReachableMethods;
-    }
-
-
     @Override
     public String toString(){
         return getName();
@@ -176,7 +161,7 @@ public class Fragment extends AbstractComponent {
         int result = super.hashCode();
         result = prime * result + ((listeners == null) ? 0 : listeners.hashCode());
         result = prime * result + ((widgets == null) ? 0 : widgets.hashCode());
-        result = prime * result + ((resourceId == null) ? 0 : resourceId.hashCode());
+        result = prime * result + (resourceIds.isEmpty() ? 0 : resourceIds.hashCode());
         return result;
     }
 

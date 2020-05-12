@@ -11,13 +11,15 @@ import org.pmw.tinylog.Logger;
 import soot.Scene;
 import soot.jimple.infoflow.android.axml.AXmlAttribute;
 import soot.jimple.infoflow.android.axml.AXmlNode;
-import soot.jimple.infoflow.android.manifest.ProcessManifest;
+import st.cs.uni.saarland.de.testApps.Settings;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static android.goal.explorer.cmdline.CmdLineParser.parseArgForBackstage;
 
 public class TestModelInitialization {
     @Test
@@ -31,37 +33,35 @@ public class TestModelInitialization {
 
         for (File file : fileList) {
             Logger.info("Working on: {}", file.getName());
-            String[] args = TestConfig. getConfigForTest(file.getAbsolutePath());
+            String[] args = TestConfig.getConfigForTest(file.getAbsolutePath());
             Integer numActivity = 0;
             Integer numService = 0;
             Integer numReceiver = 0;
-            ProcessManifest manifest = null;
+            App instance = null;
 
             try {
                 GlobalConfig config = CmdLineParser.parse(args);
-
-                STGExtractor extractor = new STGExtractor(config);
-                extractor.initialize();
+                Settings settings = parseArgForBackstage(config);
+                STGExtractor extractor = new STGExtractor(config, settings);
+                instance = extractor.getAppModel();
 
                 // update numbers
                 numActivity = extractor.getNumActInManifest();
                 numService = extractor.getNumServiceInManifest();
                 numReceiver = extractor.getNumReceiverInManifest();
-                manifest = extractor.getManifest();
             } catch (Exception e) {
                 Logger.error("Failed: {}", e.getMessage());
             }
 
             // assertions
-            App instance = App.v();
             assert Scene.v().getCallGraph()!=null;
             assert Scene.v().getCallGraph().size()>0;
             assert instance!=null;
             assert instance.getActivities()!=null;
-            assert manifest != null;
+            assert instance.getManifest() != null;
             // Check for activities
             if (instance.getActivities().size() < numActivity) {
-                for (AXmlNode activityNode : manifest.getActivities()) {
+                for (AXmlNode activityNode : instance.getManifest().getActivities()) {
                     // Only check for enabled components
                     AXmlAttribute<?> attrEnabled = activityNode.getAttribute("enabled");
                     if (attrEnabled == null || !attrEnabled.getValue().equals(Boolean.FALSE)) {
@@ -72,14 +72,14 @@ public class TestModelInitialization {
                 }
             } else if (instance.getActivities().size() > numActivity) {
                 for (Activity activity : instance.getActivities()) {
-                    AXmlNode activityNode = manifest.getActivity(activity.getName());
+                    AXmlNode activityNode = instance.getManifest().getActivity(activity.getName());
                     assert activityNode != null;
                 }
             }
 
             // Check for services
             if (instance.getServices().size() < numService) {
-                for (AXmlNode serviceNode : manifest.getServices()) {
+                for (AXmlNode serviceNode : instance.getManifest().getServices()) {
                     AXmlAttribute<?> attrEnabled = serviceNode.getAttribute("enabled");
                     if (attrEnabled == null || !attrEnabled.getValue().equals(Boolean.FALSE)) {
                         Service service = instance.getServiceByName((String) serviceNode.
@@ -89,14 +89,14 @@ public class TestModelInitialization {
                 }
             } else if (instance.getServices().size() > numService) {
                 for (Service service : instance.getServices()) {
-                    AXmlNode serviceNode = manifest.getService(service.getName());
+                    AXmlNode serviceNode = instance.getManifest().getService(service.getName());
                     assert serviceNode != null;
                 }
             }
 
             // Check for broadcast receivers
             if (instance.getBroadcastReceivers().size() < numReceiver) {
-                for (AXmlNode receiverNode : manifest.getReceivers()) {
+                for (AXmlNode receiverNode : instance.getManifest().getReceivers()) {
                     AXmlAttribute<?> attrEnabled = receiverNode.getAttribute("enabled");
                     if (attrEnabled == null || !attrEnabled.getValue().equals(Boolean.FALSE)) {
                         BroadcastReceiver receiver = instance.getReceiverByName((String) receiverNode.
@@ -106,7 +106,7 @@ public class TestModelInitialization {
                 }
             } else if (instance.getBroadcastReceivers().size() > numReceiver) {
                 for (BroadcastReceiver receiver : instance.getBroadcastReceivers()) {
-                    AXmlNode receiverNode = manifest.getReceiver(receiver.getName());
+                    AXmlNode receiverNode = instance.getManifest().getReceiver(receiver.getName());
                     assert receiverNode != null;
                 }
             }

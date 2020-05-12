@@ -2,7 +2,9 @@ package android.goal.explorer.model.stg.node;
 
 import android.goal.explorer.model.component.Activity;
 import android.goal.explorer.model.component.Fragment;
-import android.goal.explorer.model.entity.AbstractEntity;
+
+import st.cs.uni.saarland.de.entities.Dialog;
+import st.cs.uni.saarland.de.entities.Menu;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -10,11 +12,28 @@ import java.util.Set;
 public class ScreenNode extends AbstractNode {
 
     private Set<Fragment> fragments;
-    private AbstractEntity abstractEntity;
+    private Menu menu;
+    private Set<Dialog> dialogs;
 
+    /**
+     * Constructor of screen node with no fragments nor menu/drawer
+     * @param activity The activity
+     */
     public ScreenNode(Activity activity) {
         super(activity);
         fragments = new HashSet<>();
+        dialogs = new HashSet<>();
+    }
+
+    /**
+     * Constructor of screen node with fragments
+     * @param activity The activity
+     * @param fragments The set of fragments
+     */
+    public ScreenNode(Activity activity, Set<Fragment> fragments) {
+        super(activity);
+        this.fragments = fragments;
+        dialogs = new HashSet<>();
     }
 
     /**
@@ -28,7 +47,8 @@ public class ScreenNode extends AbstractNode {
         } else {
             fragments = new HashSet<>();
         }
-        abstractEntity = toClone.getAbstractEntity();
+        menu = toClone.getMenu();
+        dialogs = toClone.getDialogs();
     }
 
     /**
@@ -39,8 +59,10 @@ public class ScreenNode extends AbstractNode {
     public ScreenNode clone(ScreenNode origScreenNode){
         ScreenNode screenNode = new ScreenNode((Activity) origScreenNode.getComponent());
         screenNode.addFragments(origScreenNode.fragments);
-        if (origScreenNode.abstractEntity !=null)
-            screenNode.setAbstractEntity(origScreenNode.abstractEntity);
+        if (origScreenNode.menu != null)
+            screenNode.setMenu(origScreenNode.menu);
+        if (!origScreenNode.dialogs.isEmpty())
+            screenNode.setMenu(origScreenNode.menu);
         return screenNode;
     }
 
@@ -69,24 +91,40 @@ public class ScreenNode extends AbstractNode {
     }
 
     /**
-     * Gets the entity of this screen node
-     * @return The entity
+     * Menu of this screen node
+     * @return gets the menu
      */
-    public AbstractEntity getAbstractEntity() {
-        return abstractEntity;
+    public Menu getMenu() {
+        return menu;
     }
 
     /**
-     * Sets the entity of this screen node
-     * @param abstractEntity The entity
+     * sets the menu of this screen node
+     * @param menu The menu to set
      */
-    public void setAbstractEntity(AbstractEntity abstractEntity) {
-        this.abstractEntity = abstractEntity;
+    public void setMenu(Menu menu) {
+        this.menu = menu;
+    }
+
+    /**
+     * Gets the dialog of this screen node
+     * @return the dialog in this screen node
+     */
+    public Set<Dialog> getDialogs() {
+        return dialogs;
+    }
+
+    /**
+     * Sets the dialogs of this screen node
+     * @param dialogs the dialogs to set
+     */
+    public void setDialogs(Set<Dialog> dialogs) {
+        this.dialogs = dialogs;
     }
 
     @Override
     public String toString(){
-        return getComponent().getName() + " fragments: " + fragments + " entity: " + abstractEntity;
+        return getComponent().getName() + " fragments: " + fragments + " menu: " + menu + " dialogs" + dialogs;
     }
 
     @Override
@@ -94,7 +132,8 @@ public class ScreenNode extends AbstractNode {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((fragments == null) ? 0 : fragments.hashCode());
-        result = prime * result + ((abstractEntity == null) ? 0 : abstractEntity.hashCode());
+        result = prime * result + ((menu == null) ? 0 : menu.hashCode());
+        result = prime * result + ((dialogs.isEmpty()) ? 0 : dialogs.hashCode());
         return result;
     }
 
@@ -117,8 +156,8 @@ public class ScreenNode extends AbstractNode {
         } else if (!fragments.equals(other.fragments))
             return false;
 
-        if (abstractEntity == null) {
-            return other.abstractEntity == null;
-        } else return abstractEntity.equals(other.abstractEntity);
+        if (menu == null) {
+            return other.menu == null;
+        } else return menu.equals(other.menu);
     }
 }

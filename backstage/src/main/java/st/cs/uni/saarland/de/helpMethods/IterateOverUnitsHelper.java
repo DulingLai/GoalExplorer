@@ -40,7 +40,7 @@ public class IterateOverUnitsHelper {
 
 		 //TODO: Tricky place #2
          // if we come from an interproc call, we should not delete the prev.fields or callStack
-         Set<SootField> prevFields = new HashSet<SootField>(stmtSwitch.getPreviousFields());
+         Set<SootField> prevFields = new HashSet<>(stmtSwitch.getPreviousFields());
          Set<SootMethod> callStack = null;
 		 if(stmtSwitch instanceof StmtSwitchForLayoutInflater){
 			 StmtSwitchForLayoutInflater stmtSwicthForLayouts = (StmtSwitchForLayoutInflater) stmtSwitch;
@@ -50,7 +50,6 @@ public class IterateOverUnitsHelper {
 			 stmtSwicthForLayouts.init();
 			 stmtSwicthForLayouts.putAllToResultedLayouts(resultLayouts);
 			 stmtSwicthForLayouts.addAllToResultedTabs(resultedTabs);
-
 		 }
 		 else {
 			 stmtSwitch.init();
@@ -253,42 +252,41 @@ public class IterateOverUnitsHelper {
 		bufferUnit.apply(stmtSwitch);
 		
 		// search the start of the block
-			if (!switchesThatWereProcessed.contains(bufferUnit) && !Thread.currentThread().isInterrupted() /*&& stmtSwitch.run()*/
-					&& ((bufferUnit instanceof IfStmt) || (bufferUnit instanceof TableSwitchStmt) || (bufferUnit instanceof LookupSwitchStmt))){
-				
-				
-				if (bufferUnit instanceof IfStmt){
-					// check: if __ goto label1(bufferUnit.getTargetbox().getUnit()); label1: (SuccOf(buffUnit))...
-					// TODO this if condition should never be false, because this is checked in the find1stBoxPart
-					if (!(((IfStmt)bufferUnit).getTargetBox().getUnit().equals(Helper.getSuccessorOf(units, bufferUnit)))){
-						// run the else part of the IfStmt
-						switchesThatWereProcessed.add(bufferUnit);
-						runElsePart(((IfStmt)bufferUnit).getTargetBox().getUnit(), firstBoxAfterBlock, units, resultInfosBeforeBlockStarts, stmtSwitch,previousFieldsBeforeBlock, body);		
-						switchesThatWereProcessed.remove(bufferUnit);
-					}	
-				}else if (bufferUnit instanceof TableSwitchStmt){
+		if (!switchesThatWereProcessed.contains(bufferUnit) && !Thread.currentThread().isInterrupted() /*&& stmtSwitch.run()*/
+				&& ((bufferUnit instanceof IfStmt) || (bufferUnit instanceof TableSwitchStmt) || (bufferUnit instanceof LookupSwitchStmt))){
+
+
+			if (bufferUnit instanceof IfStmt){
+				// check: if __ goto label1(bufferUnit.getTargetbox().getUnit()); label1: (SuccOf(buffUnit))...
+				// TODO this if condition should never be false, because this is checked in the find1stBoxPart
+				if (!(((IfStmt)bufferUnit).getTargetBox().getUnit().equals(Helper.getSuccessorOf(units, bufferUnit)))){
+					// run the else part of the IfStmt
 					switchesThatWereProcessed.add(bufferUnit);
-					List<Unit> targets = ((TableSwitchStmt)bufferUnit).getTargets();
-					for (Unit u : targets){
-						if(Thread.currentThread().isInterrupted()){
-							return;
-						}
-						runElsePart(u, firstBoxAfterBlock, units, resultInfosBeforeBlockStarts, stmtSwitch,previousFieldsBeforeBlock,  body);
-					}
-					switchesThatWereProcessed.remove(bufferUnit);
-				}else if (bufferUnit instanceof LookupSwitchStmt){
-					switchesThatWereProcessed.add(bufferUnit);
-					List<Unit> targets = ((LookupSwitchStmt)bufferUnit).getTargets();
-					for (Unit u : targets){
-						if(Thread.currentThread().isInterrupted()){
-							return;
-						}
-						runElsePart(u, firstBoxAfterBlock, units, resultInfosBeforeBlockStarts, stmtSwitch, previousFieldsBeforeBlock, body);
-					}
+					runElsePart(((IfStmt)bufferUnit).getTargetBox().getUnit(), firstBoxAfterBlock, units, resultInfosBeforeBlockStarts, stmtSwitch,previousFieldsBeforeBlock, body);
 					switchesThatWereProcessed.remove(bufferUnit);
 				}
+			}else if (bufferUnit instanceof TableSwitchStmt){
+				switchesThatWereProcessed.add(bufferUnit);
+				List<Unit> targets = ((TableSwitchStmt)bufferUnit).getTargets();
+				for (Unit u : targets){
+					if(Thread.currentThread().isInterrupted()){
+						return;
+					}
+					runElsePart(u, firstBoxAfterBlock, units, resultInfosBeforeBlockStarts, stmtSwitch,previousFieldsBeforeBlock,  body);
+				}
+				switchesThatWereProcessed.remove(bufferUnit);
+			}else if (bufferUnit instanceof LookupSwitchStmt){
+				switchesThatWereProcessed.add(bufferUnit);
+				List<Unit> targets = ((LookupSwitchStmt)bufferUnit).getTargets();
+				for (Unit u : targets){
+					if(Thread.currentThread().isInterrupted()){
+						return;
+					}
+					runElsePart(u, firstBoxAfterBlock, units, resultInfosBeforeBlockStarts, stmtSwitch, previousFieldsBeforeBlock, body);
+				}
+				switchesThatWereProcessed.remove(bufferUnit);
 			}
-//		}
+		}
 		Unit predecessorUnit = null;
 		try{
 			predecessorUnit = Helper.getPredecessorOf(units, bufferUnit);

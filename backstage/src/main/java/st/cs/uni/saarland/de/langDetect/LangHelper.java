@@ -30,7 +30,8 @@ import java.util.stream.Collectors;
  */
 public class LangHelper {
     private static LangHelper langHelper;
-    private static final String PROFILE_FOLDER = "res/langProfiles/";
+//    private static final String PROFILE_FOLDER = "res/langProfiles/";
+    private static final String PROFILE_FOLDER = "/Users/dulinglai/Documents/Study/ResearchProjects/2019_android_targeted_exploration/GoalExplorer/backstage/res/langProfiles/";
     public static Logger logger = LoggerFactory.getLogger(LangHelper.class);
     private static final double enRatio = 0.9;
     private static final double langRatio = 0.2;

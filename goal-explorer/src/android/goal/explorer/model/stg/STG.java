@@ -22,9 +22,6 @@ public class STG {
     private Set<ServiceNode> serviceNodeSet;
     private Set<BroadcastReceiverNode> broadcastReceiverNodeSet;
 
-    private MultiMap<AbstractNode, TransitionEdge> outEdgeMap;
-    private MultiMap<AbstractNode, TransitionEdge> inEdgeMap;
-
 //    public static synchronized STG v() {
 //        if (instance == null)
 //            throw new RuntimeException("SSTG was not initialized. Please make sure to call "
@@ -62,8 +59,6 @@ public class STG {
         this.serviceNodeSet = Collections.synchronizedSet(new HashSet<>());
         this.broadcastReceiverNodeSet = Collections.synchronizedSet(new HashSet<>());
         this.transitionEdges = Collections.synchronizedList(new ArrayList<>());
-        this.outEdgeMap = new HashMultiMap<>();
-        this.inEdgeMap = new HashMultiMap<>();
 
         // create initial nodes
         for (Service service : app.getServices()) {
@@ -90,8 +85,6 @@ public class STG {
     public void addTransitionEdge(AbstractNode srcNode, AbstractNode tgtNode) {
         TransitionEdge newEdge = new TransitionEdge(srcNode, tgtNode);
         transitionEdges.add(newEdge);
-        outEdgeMap.put(srcNode, newEdge);
-        inEdgeMap.put(tgtNode, newEdge);
     }
 
     /**
@@ -103,8 +96,6 @@ public class STG {
     public void addTransitionEdge(AbstractNode srcNode, AbstractNode tgtNode, EdgeTag tag) {
         TransitionEdge newEdge = new TransitionEdge(srcNode, tgtNode, tag);
         transitionEdges.add(newEdge);
-        outEdgeMap.put(srcNode, newEdge);
-        inEdgeMap.put(tgtNode, newEdge);
     }
 
     /**
@@ -146,8 +137,7 @@ public class STG {
         Set<ScreenNode> screenNodes = new HashSet<>();
         for (ScreenNode screenNode : screenNodeSet) {
             if (screenNode.getName().equalsIgnoreCase(name)) {
-                if (screenNode.getAbstractEntity() == null)
-                    screenNodes.add(screenNode);
+                screenNodes.add(screenNode);
             }
         }
         return screenNodes;
@@ -162,32 +152,31 @@ public class STG {
         Set<ScreenNode> screenNodes = new HashSet<>();
         for (ScreenNode screenNode : screenNodeSet) {
             if (screenNode.getName().equalsIgnoreCase(name)) {
-                if (screenNode.getAbstractEntity() != null) {
-                    if (screenNode.getAbstractEntity() instanceof Menu)
-                        screenNodes.add(screenNode);
+                if (screenNode.getMenu() != null) {
+                    screenNodes.add(screenNode);
                 }
             }
         }
         return screenNodes;
     }
 
-    /**
-     * Gets the screen nodes with drawer by name
-     * @param name The name to look up screen node
-     * @return The screen nodes
-     */
-    public Set<ScreenNode> getScreenNodeWithDrawerByName(String name) {
-        Set<ScreenNode> screenNodes = new HashSet<>();
-        for (ScreenNode screenNode : screenNodeSet) {
-            if (screenNode.getName().equalsIgnoreCase(name)) {
-                if (screenNode.getAbstractEntity() != null) {
-                    if (screenNode.getAbstractEntity() instanceof Drawer)
-                        screenNodes.add(screenNode);
-                }
-            }
-        }
-        return screenNodes;
-    }
+//    /**
+//     * Gets the screen nodes with drawer by name
+//     * @param name The name to look up screen node
+//     * @return The screen nodes
+//     */
+//    public Set<ScreenNode> getScreenNodeWithDrawerByName(String name) {
+//        Set<ScreenNode> screenNodes = new HashSet<>();
+//        for (ScreenNode screenNode : screenNodeSet) {
+//            if (screenNode.getName().equalsIgnoreCase(name)) {
+//                if (screenNode.getAbstractEntity() != null) {
+//                    if (screenNode.getAbstractEntity() instanceof Drawer)
+//                        screenNodes.add(screenNode);
+//                }
+//            }
+//        }
+//        return screenNodes;
+//    }
 
     /**
      * Gets the screen node with set of fragments
@@ -256,6 +245,10 @@ public class STG {
      */
     public Set<ScreenNode> getAllScreens(){
         return screenNodeSet;
+    }
+
+    public List<TransitionEdge> getAllEdges() {
+        return transitionEdges;
     }
 
     /**

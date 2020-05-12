@@ -88,14 +88,33 @@ public class Main_UI_Analysis {
 		// save start time
 		long startTime = System.currentTimeMillis();
 		String appname = Helper.getApkName().replace(".apk", "");
-		String appOutputDir = outputDir.getAbsolutePath();
+		String appOutputDir = outputDir.getAbsolutePath() + File.separator + appname;
 
 		try {
 			// start analysis
 			logger.info("<Start Analysis for app nr: " + appCount + " : " + appname + ">");
 
 			// start apkTool
-			// extract xml structure of app with the help of the apkTool, for the given applicati
+			// extract xml structure of app with the help of the apkTool, for the given application
+			try {
+				String cmd = "java -jar " + appOutputDir + File.separator +
+						"apktool_2.1.1.jar -s -f d " + Helper.getApkPath() +
+						" -o " + appOutputDir;
+				Process p = Runtime.getRuntime().exec(cmd);
+				InputStream is = p.getInputStream();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+				String line;
+				while ((line = reader.readLine()) != null) {
+					logger.debug(line);
+				}
+				p.waitFor();
+				is.close();
+				reader.close();
+				p.destroy();
+			} catch (IOException|InterruptedException e) {
+				logger.error("Failed to run apktool: " + e.getMessage());
+			}
+
 
 			Content.getInstance(appOutputDir);
 			Application app = null;
@@ -114,13 +133,16 @@ public class Main_UI_Analysis {
 
 
 			if(!isTest) {
-				final int countOfActivities = app.getActivities().size();
-				final long countOfXMlLayouts = app.getAllXMLLayoutFiles().stream().filter(x -> !(x instanceof Menu) && !x.getName().startsWith("abc_")).count();
-				if (countOfXMlLayouts / (double) (countOfActivities) < 0.7) {
-					String message = "App has less than 70% of XML Layouts.";
-					logger.error(message);
-					Helper.saveToStatisticalFile(message);
-					return false;
+				final int countOfActivities;
+				if (app != null) {
+					countOfActivities = app.getActivities().size();
+					final long countOfXMlLayouts = app.getAllXMLLayoutFiles().stream().filter(x -> !(x instanceof Menu) && !x.getName().startsWith("abc_")).count();
+					if (countOfXMlLayouts / (double) (countOfActivities) < 0.7) {
+						String message = "App has less than 70% of XML Layouts.";
+						logger.error(message);
+						Helper.saveToStatisticalFile(message);
+						return false;
+					}
 				}
 			}
 
@@ -129,6 +151,10 @@ public class Main_UI_Analysis {
 			PackManager.v().runPacks();
 			logger.info("UI Analysis Pack is done");
 
+			if (app == null) {
+				logger.error("Failed to run UI analysis!");
+				return false;
+			}
 			try {
 				logger.info("Resolving XML dependencies");
 //				 ressolve XMLTag dependencies
@@ -196,14 +222,18 @@ public class Main_UI_Analysis {
 			}
 
 			//Mapping activities to layouts
+			for (XMLLayoutFile layoutFile : app.getAllXMLLayoutFiles()) {
+				if (layoutFile instanceof Menu) {
+					Menu newMenu = (Menu) layoutFile;
+					app.addMenu(newMenu.getId(), newMenu);
+				}
+			}
 			final Set<Activity> activities = app.getActivities();
 			final Map<String, Set<Integer>> activityToXmlLayoutFiles = app.getActivityToXMLLayoutFiles();
 			activityToXmlLayoutFiles.keySet().forEach(acName -> {
 				Set<Integer> layoutIds = activityToXmlLayoutFiles.get(acName);
 				Optional<Activity> optionalActivity = activities.stream().filter(x -> x.getName().equals(acName)).findFirst();
-				if (optionalActivity.isPresent()) {
-					layoutIds.forEach(optionalActivity.get()::addXmlLayout);
-				}
+				optionalActivity.ifPresent(activity -> layoutIds.forEach(activity::addXmlLayout));
 			});
 			for (Activity ac : app.getActivities()) {
 				if (ac.getLabel().startsWith("@string/")) {
@@ -217,11 +247,11 @@ public class Main_UI_Analysis {
 			// save the data of the UIElements with their listeners
 			try {
 				logger.info("Saving appSerialized");
-				this.getSerializedOutput(appOutputDir, app);
+//				this.getSerializedOutput(appOutputDir, app);
 //				this.saveElementsData(new File(appOutputDir + File.separator + "UIElements.txt"), app);
 //				this.saveOnlyButtonData(new File(appOutputDir + File.separator + "buttons.txt"), app);
 //				this.getScreensInFile(appOutputDir, app);
-				this.saveXMLLayoutFiles(appOutputDir, app);
+//				this.saveXMLLayoutFiles(appOutputDir, app);
 
 				this.saveClassToClassOrLayoutFile(appOutputDir, app);
 			} catch (IOException e1) {
@@ -249,25 +279,22 @@ public class Main_UI_Analysis {
 	
 
 	private void saveActivityToLayout(String appOutputDir, Application app) throws IOException {
-		String list = "";
+		StringBuilder list = new StringBuilder();
 
 		for (Entry<String, Set<Integer>> entry : app.getActivityToXMLLayoutFiles().entrySet()){
-			String res = "";
+			StringBuilder res = new StringBuilder();
 			for (int id : entry.getValue())
-				res = res + id + "; ";
-			list = list + entry.getKey() + ": " +  res + "\n";
+				res.append(id).append("; ");
+			list.append(entry.getKey()).append(": ").append(res).append("\n");
 		}
 
 
 		File f = createFile(appOutputDir, "activitiesToLayoutIds");
 
-		FileOutputStream writerStream = new FileOutputStream(f, true);
-		try {
-			byte[] b = list.getBytes();
+		try (FileOutputStream writerStream = new FileOutputStream(f, true)) {
+			byte[] b = list.toString().getBytes();
 			writerStream.write(b);
 
-		} finally {
-			writerStream.close();
 		}
 
 	}

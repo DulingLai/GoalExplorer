@@ -97,5 +97,5 @@ public class Settings {
     public Boolean limitByPackageName = false;
 
     @Parameter(names = UI_MENUS, description = "Process Menus in the UI phase")
-    public boolean processMenus = false;
+    public boolean processMenus = true;
 }

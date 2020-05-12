@@ -20,6 +20,7 @@ public class CallbackToApiMapper implements Callable<Void> {
 	
 	private final SootMethod callbackToStart;
 	private final List<ApiInfoForForward> apisFound;
+	private SootClass newSootActivityClass;
 	private final Logger logger;
 	private final int currentId;
 	private final int overall;
@@ -35,6 +36,11 @@ public class CallbackToApiMapper implements Callable<Void> {
 	private final boolean trackCallStack;
 	private final boolean limitByPackageName;
 	private final Map<SootMethod, List<SootMethod>> callStack;
+
+	// Activity
+	private static final String ACTIVITYCLASS = "android.app.Activity";
+	private static final String APPCOMPATACTIVITYCLASS_V4 = "android.support.v4.app.AppCompatActivity";
+	private static final String APPCOMPATACTIVITYCLASS_V7 = "android.support.v7.app.AppCompatActivity";
 
     public CallbackToApiMapper(SootMethod callback, String elementId, int currentId, int overall, int depthMethodLevel, boolean limitByPackageName, List<ApiInfoForForward> apisFound, boolean trackStack){
 
@@ -63,6 +69,7 @@ public class CallbackToApiMapper implements Callable<Void> {
 
         this.visitedMethods = new ArrayList<>();
 		this.sourcesAndSinksSignatures = new HashSet<>();
+		newSootActivityClass = null;
 	}
 
 	public void setSourcesAndSinks(Set<String> sourcesAndSinks) {
@@ -272,8 +279,7 @@ public class CallbackToApiMapper implements Callable<Void> {
 		visitedMethods.add(cSite.method);
 		final int currentMethodDepthLevel = callStack.size();
 
-		List<SootMethod> localCallStack = new ArrayList<>();
-		localCallStack.addAll(callStack);
+		List<SootMethod> localCallStack = new ArrayList<>(callStack);
 		
 		List<CallSite> callSites = new ArrayList<>();
 
@@ -321,11 +327,17 @@ public class CallbackToApiMapper implements Callable<Void> {
 					String clnName = ((IntentInfo)info).getClassName();
 					if(clnName != null){
 						clnName = clnName.replace("/" ,".");
+						if (clnName.startsWith("L")) {
+							clnName = clnName.substring(1);
+						}
+						if (clnName.endsWith(";")) {
+							clnName = clnName.substring(0, clnName.length()-1);
+						}
 						if(Scene.v().getSootClassUnsafe(clnName) != null) {
-
+							SootClass classOfTarget = Scene.v().getSootClass(clnName);
+							setNewSootActivityClass(classOfTarget);
 							if(targetCall.method.getSubSignature().equals(LifecycleConstants.SERVICE_BIND)){
-								SootClass classOfTarget = Scene.v().getSootClass(clnName);
-								while (true || classOfTarget.getName().equals("java.lang.Object")) {
+								while (!classOfTarget.getName().equals("java.lang.Object")) {
 									if (classOfTarget.getMethodByNameUnsafe("onBind") != null) {
 										SootMethod onBind = classOfTarget.getMethodByName("onBind");
 										if (onBind.getSubSignature().equals(LifecycleConstants.SERVICE_ONBIND)) {
@@ -352,7 +364,7 @@ public class CallbackToApiMapper implements Callable<Void> {
 									classOfTarget = Scene.v().getActiveHierarchy().getSuperclassesOf(classOfTarget).get(0);
 								}
 								classOfTarget = Scene.v().getSootClass(clnName);
-								while (true || classOfTarget.getName().equals("java.lang.Object")) {
+								while (!classOfTarget.getName().equals("java.lang.Object")) {
 									if (classOfTarget.getMethodByNameUnsafe("onRebind") != null) {
 										SootMethod onRebind = classOfTarget.getMethodByName("onRebind");
 										if (onRebind.getSubSignature().equals(LifecycleConstants.SERVICE_ONREBIND)) {
@@ -378,10 +390,8 @@ public class CallbackToApiMapper implements Callable<Void> {
 									}
 									classOfTarget = Scene.v().getActiveHierarchy().getSuperclassesOf(classOfTarget).get(0);
 								}
-							}
-							else if(targetCall.method.getSubSignature().equals(LifecycleConstants.SERVICE_START)){
-								SootClass classOfTarget = Scene.v().getSootClass(clnName);
-								while (true || classOfTarget.getName().equals("java.lang.Object")) {
+							} else if(targetCall.method.getSubSignature().equals(LifecycleConstants.SERVICE_START)){
+								while (!classOfTarget.getName().equals("java.lang.Object")) {
 									if (classOfTarget.getMethodByNameUnsafe("onStart") != null) {
 										SootMethod onStart = classOfTarget.getMethodByName("onStart");
 										if (onStart.getSubSignature().equals(LifecycleConstants.SERVICE_ONSTART1)) {
@@ -408,7 +418,7 @@ public class CallbackToApiMapper implements Callable<Void> {
 									classOfTarget = Scene.v().getActiveHierarchy().getSuperclassesOf(classOfTarget).get(0);
 								}
 								classOfTarget = Scene.v().getSootClass(clnName);
-								while (true || classOfTarget.getName().equals("java.lang.Object")) {
+								while (!classOfTarget.getName().equals("java.lang.Object")) {
 									if (classOfTarget.getMethodByNameUnsafe("onStartCommand") != null) {
 										SootMethod onStart = classOfTarget.getMethodByName("onStartCommand");
 										if (onStart.getSubSignature().equals(LifecycleConstants.SERVICE_ONSTART2)) {
@@ -434,11 +444,9 @@ public class CallbackToApiMapper implements Callable<Void> {
 									}
 									classOfTarget = Scene.v().getActiveHierarchy().getSuperclassesOf(classOfTarget).get(0);
 								}
-							}
-							else {
+							} else {
 								//add connection to the OnCreate
-								SootClass classOfTarget = Scene.v().getSootClass(clnName);
-								while (true || classOfTarget.getName().equals("java.lang.Object")) {
+								while (!classOfTarget.getName().equals("java.lang.Object")) {
 									if (classOfTarget.getMethodUnsafe(CONSTANT_SIGNATURES.ACTIVITY_ONCREATE) != null) {
 										SootMethod onCreate = classOfTarget.getMethod(CONSTANT_SIGNATURES.ACTIVITY_ONCREATE);
 										if (onCreate.getSubSignature().equals(CONSTANT_SIGNATURES.ACTIVITY_ONCREATE)) {
@@ -532,5 +540,13 @@ public class CallbackToApiMapper implements Callable<Void> {
 				return;
 			}
 		}
+	}
+
+	public synchronized SootClass getNewSootActivityClass() {
+		return newSootActivityClass;
+	}
+
+	public synchronized void setNewSootActivityClass(SootClass newSootActivityClass) {
+		this.newSootActivityClass = newSootActivityClass;
 	}
 }

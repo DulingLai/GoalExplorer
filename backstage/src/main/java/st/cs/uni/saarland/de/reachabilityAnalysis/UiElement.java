@@ -6,6 +6,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamConverter;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import soot.SootClass;
 import soot.SootMethod;
 import st.cs.uni.saarland.de.helpClasses.Helper;
 
@@ -33,6 +34,8 @@ public final class UiElement {
 	public String kindOfElement;
 	public List<String> superClasses;
 	public List<Map<String, List<String>>> intentFilters;
+	@XStreamOmitField()
+	public SootClass targetSootClass;
 	
 	@Override
 	public String toString(){

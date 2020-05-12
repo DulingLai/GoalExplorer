@@ -21,7 +21,9 @@ public class SearchMenusMain {
 	private Content content = Content.getInstance();
 	private AppController appController = AppController.getInstance();
 
-	public void getMenusInApp(Set<MenuInfo> optionInfos, Set<MenuInfo> contextMenuInfos, Set<MenuInfo> onCreateContextInfos, Set<PopupMenuInfo> popupInfos, Set<DropDownNavMenuInfo> dropDownInfos){
+	public void getMenusInApp(Set<MenuInfo> optionInfos, Set<MenuInfo> contextMenuInfos,
+							  Set<MenuInfo> onCreateContextInfos, Set<PopupMenuInfo> popupInfos,
+							  Set<DropDownNavMenuInfo> dropDownInfos){
 		
 		try{
 			getOptionMenus(optionInfos);
@@ -193,7 +195,6 @@ public class SearchMenusMain {
 				Collection<Listener> listeners = new HashSet<Listener>();
 				listeners.add(listener);
 				appController.addDataToMenuObject(menuId, "Option", listeners);
-
 			} catch(IllegalArgumentException e){
 				logger.error("SearchOptionMenus:" + "XMLLayoutFile file with this ID was not found: " + mi.getLayoutID());
 			}

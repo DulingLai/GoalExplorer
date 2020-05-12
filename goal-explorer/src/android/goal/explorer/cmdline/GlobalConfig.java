@@ -1,5 +1,6 @@
 package android.goal.explorer.cmdline;
 
+import soot.jimple.infoflow.InfoflowConfiguration;
 import soot.jimple.infoflow.android.InfoflowAndroidConfiguration;
 
 public class GlobalConfig {
@@ -17,10 +18,16 @@ public class GlobalConfig {
     // The number of threads used in parallel analysis
     private Integer numThread;
 
+    // The point-to analysis (callgraph algorithm)
+    public enum PointToType{
+        CONTEXT, DEFAULT
+    }
+    private PointToType pointToType = PointToType.DEFAULT;
+
     public GlobalConfig() {
-        flowdroidConfig = new InfoflowAndroidConfiguration();
+        setFlowdroidConfig(new InfoflowAndroidConfiguration());
         targetApi = -1;
-        timeout = 5;
+        timeout = 120;
         numThread = 16;
     }
 
@@ -86,5 +93,28 @@ public class GlobalConfig {
      */
     public void setNumThread(Integer numThread) {
         this.numThread = numThread;
+    }
+
+    /**
+     * Sets the point-to analysis type:
+     *      context-sensitive or -insensitive (default)
+     * @param pointToType The point-to analysis type
+     */
+    public void setPointToType(PointToType pointToType) {
+        this.pointToType = pointToType;
+        switch(pointToType) {
+            case CONTEXT:
+                flowdroidConfig.setCallgraphAlgorithm(InfoflowConfiguration.CallgraphAlgorithm.GEOM);
+            case DEFAULT:
+                flowdroidConfig.setCallgraphAlgorithm(InfoflowConfiguration.CallgraphAlgorithm.AutomaticSelection);
+        }
+    }
+
+    /**
+     * Gets the type of point-to analysis
+     * @return The type of point-to analysis
+     */
+    public PointToType getPointToType() {
+        return this.pointToType;
     }
 }

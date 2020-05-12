@@ -7,6 +7,7 @@ import android.goal.explorer.model.component.*;
 import org.pmw.tinylog.Logger;
 import soot.MethodOrMethodContext;
 import soot.Scene;
+import soot.SootClass;
 import soot.jimple.infoflow.android.callbacks.CallbackDefinition;
 import soot.jimple.infoflow.memory.IMemoryBoundedSolver;
 import soot.jimple.infoflow.memory.ISolverTerminationReason;
@@ -31,10 +32,6 @@ public class TopologyExtractor implements IMemoryBoundedSolver {
 
     private Set<IMemoryBoundedSolverStatusNotification> notificationListeners = new HashSet<>();
     private ISolverTerminationReason isKilled = null;
-
-    private enum AnalysisType {
-        MENU, DRAWER, BOTH
-    }
 
     // UI elements
 //    private final Set<DialogEntity> dialogs = Collections.synchronizedSet(new HashSet<>());
@@ -108,9 +105,9 @@ public class TopologyExtractor implements IMemoryBoundedSolver {
         collectLifecycleMethods(comp);
 
         // Collect callback methods
-        collectCallbackMethods(comp);
+        collectCallbackMethods(comp, app.getCallbacksInSootClass(comp.getMainClass()));
 
-        Logger.debug("[{}] DONE collecting topology for: {}...", TAG, comp.getMainClass());
+        Logger.debug("[{}] DONE - Collected topology for: {}...", TAG, comp.getMainClass());
 
         // Collect reachable methods from lifecycle methods
 //        for (MethodOrMethodContext method : comp.getLifecycleMethods()) {
@@ -184,7 +181,17 @@ public class TopologyExtractor implements IMemoryBoundedSolver {
     /**
      * Collects all extended classes of the component declared in the manifest
      */
-    private void collectExtendedClasses(AbstractComponent comp){
+    public static void collectExtendedClasses(AbstractComponent comp){
+        // Find the main SootClass if not found
+        SootClass sc = comp.getMainClass();
+        if (sc == null) {
+            sc = Scene.v().getSootClassUnsafe(comp.getName());
+            if (sc != null)
+                comp.setMainClass(sc);
+            else
+                Logger.error("Failed to find class for component: {}", comp.getName());
+        }
+
         if (comp instanceof Activity) {
             Scene.v().getActiveHierarchy().getSuperclassesOf(comp.getMainClass()).forEach(x -> {
                 if (Scene.v().getActiveHierarchy().isClassSubclassOf(x, AndroidClass.v().osClassActivity) ||
@@ -209,6 +216,15 @@ public class TopologyExtractor implements IMemoryBoundedSolver {
                         comp.addAddedClass(x);
                 }
             });
+        } else if (comp instanceof Fragment) {
+            // Fragments
+            Scene.v().getActiveHierarchy().getSuperclassesOf(comp.getMainClass()).forEach(x -> {
+                if (Scene.v().getActiveHierarchy().isClassSubclassOf(x, AndroidClass.v().osClassFragment) ||
+                        Scene.v().getActiveHierarchy().isClassSubclassOf(x, AndroidClass.v().scFragment)) {
+                    if (!SystemClassHandler.isClassInSystemPackage(x.getName()))
+                        comp.addAddedClass(x);
+                }
+            });
         }
     }
 
@@ -216,14 +232,14 @@ public class TopologyExtractor implements IMemoryBoundedSolver {
      * collects the lifecycle methods for a component
      * @param comp The component to collect lifecycle methods
      */
-    private void collectLifecycleMethods(AbstractComponent comp) {
+    public static void collectLifecycleMethods(AbstractComponent comp) {
         // lifecycle methods
         List<String> lifecycleMethods = Collections.emptyList();
 
         if (comp instanceof Activity) {
-            lifecycleMethods = MethodConstants.Activity.getlifecycleMethodsPreRun();
+            lifecycleMethods = MethodConstants.Activity.getLifecycleMethods();
         } else if (comp instanceof Service) {
-            lifecycleMethods = MethodConstants.Service.getLifecycleMethodsPrerun();
+            lifecycleMethods = MethodConstants.Service.getLifecycleMethods();
         } else if (comp instanceof BroadcastReceiver) {
             lifecycleMethods = MethodConstants.BroadcastReceiver.getLifecycleMethods();
         } else if (comp instanceof Fragment) {
@@ -242,8 +258,7 @@ public class TopologyExtractor implements IMemoryBoundedSolver {
      * Collects all callback methods of the component
      * @param comp The given component to collect callback methods
      */
-    private void collectCallbackMethods(AbstractComponent comp) {
-        Set<CallbackDefinition> callbacks = new HashSet<>(app.getCallbacksInSootClass(comp.getMainClass()));
+    public static void collectCallbackMethods(AbstractComponent comp, Set<CallbackDefinition> callbacks) {
         comp.addCallbacks(callbacks);
 
         // Menu callbacks
@@ -254,9 +269,9 @@ public class TopologyExtractor implements IMemoryBoundedSolver {
      * Finds all menu creation and callback methods in a given component
      * @param comp The component to look for menu creation and callback methods
      */
-    private void collectMenuMethods(AbstractComponent comp) {
+    private static void collectMenuMethods(AbstractComponent comp) {
         // Get the list of menu methods
-        List<String> menuCreateMethods = Collections.emptyList();
+        List<String> menuCreateMethods;
         List<String> menuCallbackMethods = MethodConstants.Menu.getOptionMenuCallbackMethodList();
         if (comp instanceof Activity) {
             menuCreateMethods = MethodConstants.Menu.getOptionMenuCreateForActivity();
